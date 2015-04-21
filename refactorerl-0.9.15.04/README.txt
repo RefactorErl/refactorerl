@@ -41,3 +41,7 @@ To get it working, do the following:
    placing the following line in your ~/.emacs file:
 
      (add-hook 'erlang-mode-hook 'refactorerl-mode)
+
+For further information please check: 
+     http://pnyf.inf.elte.hu/trac/refactorerl
+     http://plc.inf.elte.hu/erlang/
