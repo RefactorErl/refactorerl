@@ -1,0 +1,228 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<meta http-equiv="Connection" content="keep-alive" />
+<title>[[[page:title()]]]</title>
+<script src='/static?file=nitrogen/jquery.js' type='text/javascript' charset='utf-8'></script>
+<script src='/static?file=nitrogen/jquery-ui.js' type='text/javascript' charset='utf-8'></script>
+<script src='/static?file=nitrogen/menu.js' type='text/javascript' charset='utf-8'></script>
+<script src='/static?file=nitrogen/livevalidation.js' type='text/javascript' charset='utf-8'></script>
+<script src='/static?file=nitrogen/nitrogen.js' type='text/javascript' charset='utf-8'></script>
+<script src='/static?file=nitrogen/bert.js' type='text/javascript' charset='utf-8'></script>
+<script src="/static?file=nitrogen/jquery_file_tree/jqueryFileTree.js" type="text/javascript"></script>
+<script src="/static?file=nitrogen/jquery.toastmessage.js" type="text/javascript"></script>
+<link href="/static?file=nitrogen/jquery_file_tree/jqueryFileTree.css" rel="stylesheet" type="text/css" media="screen" />
+<link rel="stylesheet" href="/static?file=nitrogen/jquery-ui/jquery.ui.all.css" type="text/css" media="screen" charset="utf-8" />
+<link rel="stylesheet" href="/static?file=nitrogen/nitrogen.css" type="text/css"/>
+<link rel="stylesheet" href="/static?file=css/jquery-ui-1.8.13.custom.css" type="text/css"/>
+<link rel="stylesheet" href="/static?file=css/style.css" type="text/css"/>
+
+</head>
+<body>
+<div id="container">
+<div id="header" class="wfid_pagetop">
+<h1>RefactorErl</h1>
+<div id="menu">
+<table>
+<tr style="margin:5px;">
+<td id="menu_queries" onMouseOver="javascript:activateMenu(this);" onMouseClick="javascript:activateMenu(this);" onMouseOut="javascript:inactivateMenu(this);"><a href="/main">Queries</a></td>
+<td id="menu_files" onMouseOver="javascript:activateMenu(this);" onMouseClick="javascript:activateMenu(this);" onMouseOut="javascript:inactivateMenu(this);"><a href="/files">Admin</a></td>
+<td id="menu_errors" onMouseOver="javascript:activateMenu(this);" onMouseClick="javascript:activateMenu(this);" onMouseOut="javascript:inactivateMenu(this);"><a href="/errors">Errors</a></td>
+<td id="menu_graph" onMouseOver="javascript:activateMenu(this);" onMouseClick="javascript:activateMenu(this);" onMouseOut="javascript:inactivateMenu(this);"><a href="/graphs">Dependency Graphs</a></td>
+<td id="menu_codedups" onMouseOver="javascript:activateMenu(this);" onMouseClick="javascript:activateMenu(this);" onMouseOut="javascript:inactivateMenu(this);"><a href="/codedups">Code Duplicates</a></td>
+<td id="menu_invs" onMouseOver="javascript:activateMenu(this);" onMouseClick="javascript:activateMenu(this);" onMouseOut="javascript:inactivateMenu(this);"><a href="/investigations">Investigations</a></td>
+<td id="menu_logout" onMouseOver="javascript:activateMenu(this);" onMouseClick="javascript:activateMenu(this);" onMouseOut="javascript:inactivateMenu(this);">[[[page:logout()]]]</td>
+</tr>
+<tr>
+<td align="center" valign="top"><img src="images/menu.png" id="menu_queries_img" class="menu_item"/></td>
+<td align="center" valign="top"><img src="images/menu.png" id="menu_files_img" class="menu_item"/></td>
+<td align="center" valign="top"><img src="images/menu.png" id="menu_errors_img" class="menu_item"/></td>
+<td align="center" valign="top"><img src="images/menu.png" id="menu_graph_img" class="menu_item"/></td>
+<td align="center" valign="top"><img src="images/menu.png" id="menu_codedups_img" class="menu_item"/></td>
+<td align="center" valign="top"><img src="images/menu.png" id="menu_invs_img" class="menu_item"/></td>
+<td align="center" valign="top"><img src="images/menu.png" id="menu_logout_img" class="menu_item"/></td>
+</tr>
+</table>
+</div>
+</div>
+
+<div id="dctabs">
+[[[page:menu()]]]
+</div>
+
+<div id="dcwrapper">
+[[[page:sourcecode_browsers()]]]
+</div>
+</div>
+<div id="mainfooter"><a
+    href="http://plc.inf.elte.hu/erlang/dl/cheat-sheet.pdf" target="_blank">
+RefactorErl Cheat-Sheet </a> &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp; <a
+    href="http://pnyf.inf.elte.hu/trac/refactorerl/wiki" target="_blank"> Manual </a></div>
+</div>
+
+<script>
+[[[script]]]
+
+var range;
+var ranges;
+var line;
+var pos;
+var cur;
+
+function dig(el,range,startl,startc,endl,endc,tab){
+    $(el).contents().each(function(i,e){
+        if (e.nodeType==1 && e.tagName!="BR")
+		{
+			dig(e,range,startl,startc,endl,endc,(e.tagName=="B"));  
+        }
+		else
+		{
+			var length;
+			var linestep;
+			if(tab) length=1; else length=e.length;
+			if(e.tagName=="BR") length=0;
+			if(e.tagName=="BR") linestep=1; else linestep=0;
+            if (pos<=startc && line<=startl){
+				if (pos+length>=startc && line+linestep>=startl)
+				{
+					if(e.nodeValue==null)
+						range.setStart(e, 0);
+					else
+			            range.setStart(e, startc-pos);
+				}
+            }
+
+            if (pos<endc && line<=endl){
+				if (pos+length>=endc && line+linestep>=endl)
+				{
+					if(e.nodeValue==null)
+						range.setEnd(e, 0);
+					else
+                		range.setEnd(e, endc-pos);
+					throw("");
+				}
+            }            
+
+            if(linestep==1) pos=1; else pos = pos+length;
+			line = line+linestep;
+        }
+    });  
+}
+
+function highlight(element,scroll,stl,stc,endl,endc)
+{
+	$(scroll).scrollTop(0);
+	pos=1;
+	line=1;
+	range = document.createRange();
+	try
+	{
+    	dig(element,range,stl,stc,endl,endc,false);
+	} catch(ex) {}
+    var sel = window.getSelection();
+    sel.removeAllRanges();
+	document.designMode = "on";
+    sel.addRange(range);
+    var y=range.getBoundingClientRect().top;
+    $(scroll).scrollTop(y-105);
+    if (!document.execCommand("HiliteColor", false, "#EEEE99")) {
+        document.execCommand("BackColor", false, "#EEEE99");
+    }
+    document.designMode = "off";
+	sel.removeAllRanges();
+}
+
+function dig2(el,ranges,starts,ends,tab){
+    $(el).contents().each(function(i,e){
+        if (e.nodeType==1 && e.tagName!="BR")
+		{
+			dig2(e,ranges,starts,ends,(e.tagName=="B"));  
+        }
+		else
+		{
+			var length=0;
+			if(e.tagName=="BR" || tab) length=1; else length=e.nodeValue.length;
+            if (pos<starts[cur]){
+				if (pos+length>=starts[cur])
+				{
+					if(e.nodeValue==null)
+						ranges[cur].setStart(e, 0);
+					else
+						if(tab) 
+							ranges[cur].setStart(e, starts[cur]-pos+3); 
+						else
+				            ranges[cur].setStart(e, starts[cur]-pos);
+				}
+            }
+
+            if (pos<ends[cur]){
+				if (pos+length>=ends[cur])
+				{
+					if(e.nodeValue==null)
+						ranges[cur].setEnd(e, 0);
+					else
+                		ranges[cur].setEnd(e, ends[cur]-pos);
+					cur++;
+					if(cur==ranges.length) throw("");
+				}
+            }            
+
+            pos = pos+length;
+
+        }
+    });  
+}
+
+function highlight2(element,scroll,starts,ends)
+{
+	$(scroll).scrollTop(0);
+	pos=0;
+	cur=0;
+	ranges = new Array(starts.length);
+	for(i=0;i<ranges.length;i++) ranges[i]=document.createRange();
+	try
+	{
+    	dig2(element,ranges,starts,ends,false);
+	} catch(ex) {}    
+    var sel = window.getSelection();
+    sel.removeAllRanges();
+	document.designMode = "on";
+    if(starts.length>0) 
+    {
+        var y=ranges[0].getBoundingClientRect().top;
+        $(scroll).scrollTop(y-105);
+    }
+	for(i=0;i<ranges.length;i++)
+	{
+    	sel.removeAllRanges();
+		sel.addRange(ranges[i]);
+		if(!document.execCommand("HiliteColor", false, "#FF6666")) {
+		    document.execCommand("BackColor", false, "#FF6666");
+		}
+	}
+    document.designMode = "off";
+	sel.removeAllRanges();
+}
+
+function generatelinenums(text,container){
+	s="";
+	l=countlines(text);
+	for(i=1;i<=l+1;i++)
+		s+=i+"<br>";
+	container.innerHTML=s;
+}
+
+function countlines(el){
+	var sum=0;
+    $(el).contents().each(function(i,e){
+		if(e.tagName=="BR") sum++;
+        if (e.nodeType==1) sum+=countlines(e); 	
+    }); 
+
+	return sum; 
+}
+
+</script>
+</body>
+</html>

@@ -1,0 +1,110 @@
+$auto-completion-item-height: 24px;
+$auto-completion-max-height:  215px;
+
+.auto-completion {
+	border: 1px solid #cacaca;
+	border-top: 0;
+	padding: 0;
+	background: #fff;
+	position: relative;
+	top: 5px;
+	left: -4px;
+	@include box-shadow(rgba(#000, 0.15) 0 1px 4px);
+
+	li {
+		list-style: none;
+	}
+
+	.hints {
+		display: table-cell;
+		vertical-align: top;
+
+		ul {
+			max-height: $auto-completion-max-height;
+			max-width: 250px;
+			min-width: 150px;
+			overflow-x: hidden;
+			overflow-y: auto;
+		}
+
+		li {
+			font-family: $monospace-font;
+			padding: 3px 7px;
+			height: $auto-completion-item-height;
+			font-size: 13px;
+			border-bottom: 1px solid #cacaca;
+			cursor: pointer;
+			color: #666;
+			background: #fff;
+			white-space: normal;
+			@include transition(background 0.2s);
+			@include box-sizing(border-box);
+
+			&.selected {
+				background: #c4c4c4;
+				@include box-shadow(rgba(#000, 0.05) 0 2px 2px inset);
+			}
+		}
+	}
+
+	.details {
+		display: table-cell;
+		vertical-align: top;
+		border-left: 1px solid #cacaca;
+		background: #f3f3f3;
+		@include box-shadow(rgba(#000, 0.05) 0 2px 2px inset);
+
+		div {
+			max-height: $auto-completion-max-height;
+			width: 350px;
+			overflow-x: hidden;
+			overflow-y: auto;
+		}
+
+		color: #333;
+
+		h3,
+		p,
+		dl {
+			margin: 10px 10px;
+		}
+
+		dt {
+			font-weight: bold;
+		}
+
+		dd {
+			padding: 0 0 0 20px;
+			margin-bottom: 5px;
+		}
+
+		.monospace {
+			font-family: $monospace-font;
+		}
+
+		.ui-match {
+			color: #111;
+			text-decoration: underline;
+		}
+	}
+}
+
+// Setup the same heights to have better positioning
+.CodeMirror-hints.for-auto-completion {
+	height: $auto-completion-max-height;
+	width: 1px;
+	border: 0;
+	padding: 0;
+	margin: 0;
+	visibility: hidden;
+	overflow: hidden;
+	overflow-x: hidden;
+	overflow-y: hidden;
+
+	li {
+		height: $auto-completion-item-height;
+		border: 0;
+		padding: 0;
+		margin: 0;
+	}
+}

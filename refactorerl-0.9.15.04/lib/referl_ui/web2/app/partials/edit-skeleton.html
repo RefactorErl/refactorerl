@@ -1,0 +1,44 @@
+<!-- Ebből bootstrap modal legyen -->
+<!-- <div class="mask"></div> -->
+<div id="skeleton-modal" class="modal fade">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <div class="modal-header">
+        <button type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+      	<div ng-switch="mode">
+      		<h4 class="modal-title" ng-switch-when="create"     >Create a new skeleton</h4>
+      		<h4 class="modal-title" ng-switch-when="create-from">Save query as skeleton</h4>
+      		<h4 class="modal-title" ng-switch-when="edit"       >Edit skeleton</h4>
+      	</div>
+      </div>
+
+      <div class="modal-body">
+        <form ng-submit="save()">
+        	<label>Name of skeleton</label>
+        	<input re-auto-focus type="text" ng-model="skeleton.name" ng-disabled="mode == 'edit'" />
+
+        	<label>Description</label>
+        	<textarea
+        		ng-model="skeleton.description"
+        		></textarea>
+
+        	<label>Skeleton source</label>
+        	<textarea
+        		re-query-input
+        		re-code-mirror
+        		re-on-tab="sourceTab()"
+        		re-on-enter="sourceEnter()"
+        		ng-model="skeleton.source"
+        		class="source"
+        		></textarea>
+        </form>
+      </div> <!-- modal-body -->
+
+      <div class="modal-footer">
+        <button type="button" class="btn btn-default" ng-click="closeEditSkeleton()" data-dismiss="modal" re-focus-on="focusCancel">Cancel</button>
+        <button type="button" class="btn btn-primary" ng-click="save()" ng-disabled="!canSave()" ng-class="{disabled: !canSave()}">Save</button>
+      </div>
+
+    </div>
+  </div>
+</div>

@@ -1,0 +1,114 @@
+#!/usr/bin/env escript
+%%% -*- erlang -*-
+%%! -sname refactorerl_cli
+
+%%% The  contents of this  file are  subject to  the Erlang  Public License,
+%%% Version  1.1, (the  "License");  you may  not  use this  file except  in
+%%% compliance  with the License.  You should  have received  a copy  of the
+%%% Erlang  Public License  along  with this  software.  If not,  it can  be
+%%% retrieved at http://plc.inf.elte.hu/erlang/
+%%%
+%%% Software  distributed under  the License  is distributed  on an  "AS IS"
+%%% basis, WITHOUT  WARRANTY OF ANY  KIND, either expressed or  implied. See
+%%% the License  for the specific language governing  rights and limitations
+%%% under the License.
+%%%
+%%% The Original Code is RefactorErl.
+%%%
+%%% The Initial Developer of the  Original Code is Eotvos Lorand University.
+%%% Portions created  by Eotvos  Lorand University are  Copyright 2009,
+%%% Eotvos Lorand University. All Rights Reserved.
+
+%%% RefactorErl command line interface (prototype)
+%%%
+%%% Setup:
+%%% - Redefine referlpath() and referlnode()
+%%% - chmod +x RefactorErl
+%%% - You may also set up a system-level alias
+%%%   (e.g. alias RefactorErl='/pathtorefactorerl/bin/RefactorErl')
+
+-define(DefaultDatabase, mnesia).
+
+-define(Usage, "
+Usage:
+------
+RefactorErl start
+    starts a singleton RefactorErl instance
+RefactorErl stop
+    stops the RefactorErl instance
+RefactorErl fun
+    remotely calls ri:fun()
+RefactorErl mod fun
+    remotely calls mod:fun()
+RefactorErl mod fun param1 param2 ... paramN
+    remotely calls mod:fun(param1, param2, ..., paramN)
+
+Note that terms with spaces should be enclosed by double quote marks.
+    E.g.: RefactorErl mod fun \"{a1, 2}\"
+
+").
+
+
+referlpath() -> filename:dirname(filename:dirname(escript:script_name())).
+referlnode() -> refactorerl@localhost.
+
+
+main([]) ->
+    format({format, ?Usage});
+main(Args) ->
+    Result =
+        try
+            rpc_call([parse(A) || A <- Args])
+        catch
+            Class:Reason -> format({error, Class, Reason})
+        end,
+    format(Result).
+
+parse(Str) ->
+    try
+        {ok, Tokens, _} = erl_scan:string(string:concat(Str, ".")),
+        {ok, Term}      = erl_parse:parse_term(Tokens),
+        Term
+    catch
+        _:_ -> Str
+    end.
+
+%% -----------------------------------------------------------------------------
+
+rpc_call(start) ->
+    rpc_call([start, ?DefaultDatabase]);
+rpc_call([start, Database]) ->
+    case net_adm:ping(referlnode()) of
+        pong -> {format, "RefactorErl is already running at ~w.~nRun `RefactorErl stop' to stop it.~n",
+                 [referlnode()]};
+        pang -> start_refactorerl(Database)
+    end;
+rpc_call([Fun])               -> rpc_call(Fun);
+rpc_call([help | Params])     -> rpc_call(ri, help, Params);
+rpc_call([Mod, Fun | Params]) -> rpc_call(Mod, Fun, Params);
+rpc_call(Fun) when is_atom(Fun) -> rpc:call(referlnode(), ri, Fun, []).
+rpc_call(Mod, Fun, Params)      -> rpc:call(referlnode(), Mod, Fun, Params).
+
+start_refactorerl(Database) ->
+    os:cmd(referlpath() ++ "/bin/starttool " ++ referlpath() ++ " -server -db " ++ atom_to_list(Database) ++ " &"),
+    erlang:set_cookie(node(), 'secretwookie'),
+    ok.
+
+%% -----------------------------------------------------------------------------
+
+format(SqArgs) when is_list(SqArgs)->
+    io:format("~s", [SqArgs]);
+format({error, Class, Reason}) ->
+    io:format("[CLI error] ~w: ~w~n", [Class, Reason]);
+format({error, Reason}) when is_list(Reason) ->
+    io:format("[CLI error] ~s~n", [Reason]);
+format({format, F}) ->
+    format({format, F, []});
+format({format, F, Params}) ->
+    io:format(F, Params);
+format({badrpc,{'EXIT',{E, R}}}) ->
+    erlang:raise(error, E, R);
+format({badrpc, nodedown}) ->
+    format({format, "RefactorErl is not running at ~w.~nRun `RefactorErl start <database>' to start with a specific database (mnesia or nif).~nRun `RefactorErl start' to start with the default database (currently ~p).~n", [referlnode(), ?DefaultDatabase]});
+format(Params) ->
+    io:format("~w~n", [Params]).

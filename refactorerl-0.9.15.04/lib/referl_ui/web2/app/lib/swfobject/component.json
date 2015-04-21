@@ -1,0 +1,9 @@
+{
+  "name": "swfobject",
+  "version": "0.0.0",
+  "commit": "9f74857a583f91e444c83dee92cf107d9535d264",
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/swfobject/swfobject.git"
+  }
+}

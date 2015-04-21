@@ -1,0 +1,25 @@
+Name: bufferserver
+Version: 0.1
+Copyright: (c) 2011 Richárd Szabó
+License: LGPL-3
+License-file: LICENSE.txt
+Author: Richárd Szabó
+Maintainer: szrqaai@inf.elte.hu
+Build-type: Simple
+Build-depends: base >= 4 && <5
+Build-depends: binary == 0.5.*
+Build-depends: regex-posix == 0.95.*
+Build-depends: split == 0.1.*
+Build-depends: strict == 0.3.*
+Build-depends: directory >= 1.0.1
+Build-depends: containers == 0.4.*
+Build-depends: fingertree >= 0 && < 0.1
+Build-depends: Diff >=0.1 && < 0.2 
+Build-depends: utf8-string >= 0.3.1
+Build-depends: bytestring >= 0.9.1
+Build-depends: MissingH
+Build-depends: parsec
+Executable: BufferServer
+Hs-source-dirs: lib/referl_ui/bufsrv
+Main-Is: Main.hs
+

@@ -1,0 +1,33 @@
+<div class="errors">
+
+
+	<div class="layout-cell main"><div class="inner1"><div class="inner2">
+		<div class="border">
+
+			<h2>Errors</h2>
+
+			<p ng-show="loading">
+				Loading errors...
+			</p>
+
+			<p ng-show="!loading &amp;&amp; !errors.length">
+				No error
+			</p>
+
+			<ul>
+				<li ng-repeat="error in errors">
+					<a ng-href="{{error.href}}">{{error.message}}</a>
+					<div ui-if="error.open &amp;&amp; error.content">
+						<textarea
+							re-code-mirror="codeMirrorConfig"
+							re-file-error="error"
+							ng-model="error.content"></textarea>
+					</div>
+				</li>
+			</ul>
+
+		</div>
+	</div></div></div>
+
+
+</div>

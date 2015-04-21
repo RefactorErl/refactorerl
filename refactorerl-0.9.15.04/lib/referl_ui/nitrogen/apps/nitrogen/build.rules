@@ -1,0 +1,10 @@
+%%% This file has -*- Erlang -*- syntax.
+#target{name=tool,
+        rules=[ #source{files="src/*/*/*.erl", rule=erl},
+		#source{files="src/*/*.erl", rule=erl},
+		#source{files="src/*.erl", rule=erl}]}.
+
+
+#target{name=clean,
+        rules=[#apply{files=["ebin/*.{beam,app}"],
+                      action=file:delete(File)}]}.

@@ -1,0 +1,7 @@
+% This is an -*- Erlang -*- application specification file.
+{description, "RefactorErl Refactoring Library"}.
+{vsn, "0.9.15.04"}.
+{modSrc, ["*.erl"]}.
+{mod, {reflib_sup, []}}.
+{registered, [transform_server, reflib_ui_router]}.
+{applications, [kernel, stdlib, referl_core]}.

@@ -1,0 +1,131 @@
+<!doctype html>
+<html lang="en">
+<head>
+	<meta charset="utf-8" />
+	<title>RefactorErl</title>
+	<link rel="stylesheet" href="lib/codemirror/lib/codemirror.css" />
+	<link rel="stylesheet" href="lib/codemirror/addon/hint/show-hint.css" />
+  <link rel="stylesheet" href="lib/codemirror/addon/dialog/dialog.css" />
+	<link rel="stylesheet" href="lib/select2/select2.css" />
+	<link rel="stylesheet" href="lib/select2/select2-bootstrap.css" />
+	<link rel="stylesheet" href="lib/jQuery-contextMenu/jquery.contextMenu.css" />
+	<link rel="stylesheet" href="lib/bootstrap/bootstrap.css" />
+	<link rel="stylesheet" href="css/app.css" />
+</head>
+<body>
+
+	<script>
+		// check if macro expansion is working, otherwise we don't have the data
+		if ("%%empty%%" === "") {
+			window.loggedInUser = "%%loggedInUser%%";
+			window.sessionId = "%%sessionId%%";
+		}
+        window.restrictedMode = "%%restricted%%" == "true";
+	</script>
+
+	<div ng-app="referl" ng-include="'partials/layout.html'"></div>
+
+	<!-- Misc. dependencies/libs -->
+	<script src="lib/jquery/jquery.min.js"></script> <!-- 1.7.2 version is used because of this bug: https://github.com/ivaynberg/select2/issues/686 -->
+	<script src="lib/jquery.ui/jquery-ui.custom.min.js"></script>
+	<script src="lib/select2/select2.min.js"></script>
+	<script src="lib/sigma/sigma.min.js"></script>
+	<script src="lib/d3/d3.min.js"></script>
+	<script src="lib/underscore/underscore-min.js"></script>
+	<script src="lib/codemirror/lib/codemirror.js"></script>
+	<script src="lib/codemirror/mode/erlang/erlang.js"></script>
+	<script src="lib/codemirror/addon/edit/closebrackets.js"></script>
+	<script src="lib/codemirror/addon/hint/show-hint.js"></script>
+	<script src="lib/codemirror/addon/selection/mark-selection.js"></script>
+	<script src="lib/codemirror/addon/display/placeholder.js"></script>
+ 	<script src="lib/codemirror/addon/dialog/dialog.js"></script>
+ 	<script src="lib/codemirror/addon/search/search.js"></script>
+ 	<script src="lib/codemirror/addon/search/searchcursor.js"></script>
+	<script src="lib/jQuery-contextMenu/jquery.contextMenu.min.js"></script>
+	<script src="lib/zeroclipboard/ZeroClipboard.min.js"></script>
+	<script src="lib/swfobject/swfobject.min.js"></script>
+	<script src="lib/moment/moment.min.js"></script>
+	<script src="lib/bootstrap/dropdown.js"></script>
+	<script src="lib/bootstrap/modal.js"></script>
+
+	<!-- Angular + AngularUI -->
+	<script src="lib/angular/angular.min.js"></script>
+	<script src="lib/angular-ui/angular-ui.min.js"></script>
+	<script src="lib/angular/angular-cookies.min.js"></script>
+
+	<!-- Application code -->
+	<script src="js/app.js"></script>
+
+	<!-- Application code: filters -->
+	<script src="js/filters.js"></script>
+	<script src="js/filters/file-name.js"></script>
+
+	<!-- Application code: controllers -->
+	<script src="js/controllers/auto-completion.js"></script>
+	<script src="js/controllers/database.js"></script>
+	<!--<script src="js/controllers/database-status.js"></script>-->
+	<script src="js/controllers/modals.js"></script>
+	<script src="js/controllers/duplicates.js"></script>
+	<script src="js/controllers/errors.js"></script>
+	<script src="js/controllers/edit-skeleton.js"></script>
+	<script src="js/controllers/graphs.js"></script>
+	<script src="js/controllers/history.js"></script>
+	<script src="js/controllers/login.js"></script>
+	<script src="js/controllers/navigation.js"></script>
+	<script src="js/controllers/queries.js"></script>
+	<script src="js/controllers/queue.js"></script>
+	<script src="js/controllers/top.js"></script>
+
+	<!-- Application code: directives -->
+	<script src="js/directives.js"></script>
+	<script src="js/directives/auto-focus.js"></script>
+	<script src="js/directives/code-mirror.js"></script>
+	<script src="js/directives/code-mirror-context-menu.js"></script>
+	<script src="js/directives/code-mirror-copy.js"></script>
+	<script src="js/directives/code-mirror-select-all.js"></script>
+    <script src="js/directives/code-mirror-dblclick.js"></script>
+    <script src="js/directives/code-mirror-search.js"></script>
+	<script src="js/directives/context-menu.js"></script>
+	<script src="js/directives/click-outside.js"></script>
+	<script src="js/directives/effect.js"></script>
+	<script src="js/directives/file-error.js"></script>
+	<script src="js/directives/focus-on.js"></script>
+	<script src="js/directives/highlight.js"></script>
+	<script src="js/directives/multi-highlight.js"></script>
+	<script src="js/directives/query-input.js"></script>
+	<script src="js/directives/recursive.js"></script>
+	<script src="js/directives/resizable.js"></script>
+	<script src="js/directives/restricted.js"></script>
+	<script src="js/directives/scroll-to-here.js"></script>
+	<script src="js/directives/follow-cursor.js"></script>
+	<script src="js/directives/scroll-to.js"></script>
+	<script src="js/directives/sigma-graph.js"></script>
+	<script src="js/directives/d3-graph.js"></script>
+	<script src="js/directives/graph-search.js"></script>
+	<script src="js/directives/time-ago.js"></script>
+
+	<!-- Application code: services -->
+	<script src="js/services.js"></script>
+	<script src="js/services/auth.js"></script>
+	<script src="js/services/auto-complete.js"></script>
+	<script src="js/services/channel.js"></script>
+	<script src="js/services/database.js"></script>
+	<script src="js/services/duplicates.js"></script>
+	<script src="js/services/effects.js"></script>
+	<script src="js/services/errors.js"></script>
+	<script src="js/services/get-session-id.js"></script>
+	<script src="js/services/graphs.js"></script>
+	<script src="js/services/job-type.js"></script>
+	<script src="js/services/jobs.js"></script>
+	<script src="js/services/location-search.js"></script>
+	<script src="js/services/predefineds.js"></script>
+	<script src="js/services/queries.js"></script>
+	<script src="js/services/shortener.js"></script>
+	<script src="js/services/skeletons.js"></script>
+	<script src="js/services/smart-location.js"></script>
+	<script src="js/services/suspendable.js"></script>
+	<script src="js/services/waiter.js"></script>
+	<script src="js/services/search.js"></script>
+
+</body>
+</html>

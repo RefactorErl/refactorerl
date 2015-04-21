@@ -1,0 +1,34 @@
+<ul class="nav navbar-nav">
+  <li>
+    <a ng-class="{active:$uiRoute}" ui-route href="#/queries">Queries</a>
+  </li>
+
+  <li re-stricted="admin">
+    <a ng-class="{active:$uiRoute}" ui-route href="#/database">Database</a>
+  </li>
+
+  <li re-stricted="admin">
+    <a ng-class="{active:$uiRoute, 'has-indicator': errorsCount}" ui-route href="#/errors" class="can-have-indicator">
+      Errors
+      <span re-effect="bounce" re-effect-trigger="bounceErrors">
+        {{errorsCount}}
+      </span>
+    </a>
+  </li>
+
+  <li><a ng-class="{active:$uiRoute}" ui-route href="#/graphs">Dependency graph</a></li>
+
+  <li>
+    <a ng-class="{active:$uiRoute}" ui-route href="#/duplicates">Code duplicates</a>
+  </li>
+</ul>
+
+<ul class="nav navbar-nav navbar-right">
+  <li>
+    <span ng-show="auth.getUser()">Logged in as {{auth.getUser().name}}</span>
+  </li>
+
+  <li class="logout">
+    <a href="#/login" ng-click="auth.logout()"><i class="glyphicon glyphicon-log-out"></i> Logout</a>
+  </li>
+</ul>

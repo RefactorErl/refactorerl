@@ -1,0 +1,128 @@
+.database {
+
+	.layout-side {
+
+		h2 {
+			> span {
+				vertical-align: top;
+				padding-right: 3px;
+			}
+			> button {
+				position: relative;
+				top: -5px;
+			}
+		}
+
+		.buttons {
+			margin: 10px 0 10px;
+		}
+
+		.box {
+			overflow-x: hidden;
+      max-height: 58%;
+		}
+
+		button {
+      height: 25px;
+      padding: 3px 7px;
+      font-size: 12px;
+      float: right;
+		}
+
+		.message {
+			color: #444;
+		}
+
+		ul {
+			@extend %file-browser;
+			.ui-match {
+				font-weight: bold;
+			}
+		}
+
+		label {
+			display: block;
+			font-size: 12px;
+			margin: 6px 0 4px 0;
+			* {
+				vertical-align: middle;
+			}
+		}
+
+		.field {
+			margin-bottom: 10px;
+			position: relative;
+
+			input[type=text] {
+				@extend %input;
+				width: 100%;
+			}
+
+			i {
+				position: absolute;
+				right: 0;
+				top: 0;
+				padding: 9px 8px 7px;
+				font-size: 10px;
+				color: #aaa;
+				cursor: pointer;
+
+				&:hover {
+					color: #888;
+				}
+			}
+		}
+	}
+
+	.border {
+		background: #fff;
+		border: 1px solid #bbb;
+		height: 100%;
+		@include box-sizing(border-box);
+	}
+
+	.home {
+		.inner2 {
+			padding: 10px 10px 10px 0;
+		}
+	}
+
+	.main {
+
+		.inner2 {
+			padding: 34px 10px 10px 0;
+		}
+
+		.filepath {
+			display: inline-block;
+			position: absolute;
+			top: 12px;
+			left: 3px;
+			height: 23px;
+			padding: 3px 6px;
+			border: 1px solid #bbb;
+			background: #fff;
+			font-size: 13px;
+			color: #444;
+			@include border-radius(3px 3px 0 0);
+			@include box-shadow(rgba(#000, 0.25) 0 0 2px);
+		}
+
+	}
+
+	.CodeMirror {
+		@extend %source-viewer;
+	}
+
+	.CodeMirror-empty .CodeMirror-gutters {
+		visibility: hidden;
+	}
+
+    .highlight {
+        background: lighten(#f6f666, 10);
+    }
+}
+
+.database-context-menu {
+	@extend %context-menu-defaults;
+}

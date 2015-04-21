@@ -1,0 +1,10 @@
+@import url("/static?file=nitrogen/jquery-ui/jquery.ui.core.css");
+@import url("/static?file=nitrogen/jquery-ui/jquery.ui.resizable.css");
+@import url("/static?file=nitrogen/jquery-ui/jquery.ui.accordion.css");
+@import url("/static?file=nitrogen/jquery-ui/jquery.ui.autocomplete.css");
+@import url("/static?file=nitrogen/jquery-ui/jquery.ui.button.css");
+@import url("/static?file=nitrogen/jquery-ui/jquery.ui.dialog.css");
+@import url("/static?file=nitrogen/jquery-ui/jquery.ui.slider.css");
+@import url("/static?file=nitrogen/jquery-ui/jquery.ui.tabs.css");
+@import url("/static?file=nitrogen/jquery-ui/jquery.ui.datepicker.css");
+@import url("/static?file=nitrogen/jquery-ui/jquery.ui.progressbar.css");

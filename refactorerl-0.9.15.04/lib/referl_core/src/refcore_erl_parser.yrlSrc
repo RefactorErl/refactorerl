@@ -1,0 +1,6 @@
+-vsn("$Rev: 8680 $").
+-include("core.hrl").
+-import(?Syn, [build/2]).
+tv({_, _, {T=#token{}, _}}) -> ?Token:get_value(T).
+tn({_, _, {_, N}}) -> N.
+

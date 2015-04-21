@@ -1,0 +1,8 @@
+{
+  "name": "sigma",
+  "version": "0.1",
+  "repository": {
+    "type": "git",
+    "url": "git://github.com/jacomyal/sigma.js.git"
+  }
+}

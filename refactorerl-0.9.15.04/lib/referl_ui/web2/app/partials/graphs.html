@@ -1,0 +1,250 @@
+<div class="graphs">
+
+	<div class="layout-side-onebox form" re-resizable="{persist: 'side'}"><div class="inner1"><div class="inner2">
+    <div class="border">
+		  <div class="box graph-box">
+		  	<h2>Graph parameters</h2>
+		  	<div class="content">
+		  		<p class="field">
+		  			<label for="level">Level</label>
+		  			<select
+		  					id="level"
+		  					ng-model="parameters.level"
+		  					ui-select2="{
+		  						minimumResultsForSearch: 10,
+		  						containerCssClass: 'graphs-select-container',
+		  						dropdownCssClass: 'graphs-select-dropdown'}">
+		  				<option ng-repeat="level in levels" value="{{level.value}}">{{level.text}}</option>
+		  			</select>
+		  		</p>
+
+		  		<p class="field">
+		  			<label for="type">Type</label>
+		  			<select
+		  					id="type"
+		  					ng-model="parameters.type"
+		  					ui-select2="{
+		  						minimumResultsForSearch: 10,
+		  						containerCssClass: 'graphs-select-container',
+		  						dropdownCssClass: 'graphs-select-dropdown'}">
+		  				<option ng-repeat="type in types" value="{{type.value}}">{{type.text}}</option>
+		  			</select>
+		  		</p>
+
+		  		<p class="field" ng-show="rootFunctionVisible()">
+		  			<label for="rootFunction">Starting functions</label>
+		  			<input
+		  				type="hidden"
+		  				id="rootFunction"
+		  				ng-model="parameters.rootFunction"
+		  				placeholder="Starting function"
+		  				ui-select2="extend(rootFunctionConfig, {
+		  					containerCssClass: 'graphs-select-container',
+		  					dropdownCssClass:  'graphs-select-dropdown'
+		  				})" />
+		  		</p>
+
+				<p class="field" ng-show="connectionFunctionVisible()">
+		  			<label for="connectionFunction">Connection functions</label>
+		  			<input
+		  				type="hidden"
+		  				id="connectionFunction"
+		  				ng-model="parameters.connectionFunction"
+		  				placeholder="Connection functions"
+		  				ui-select2="extend(connectionFunctionConfig, {
+		  					containerCssClass: 'graphs-select-container',
+		  					dropdownCssClass:  'graphs-select-dropdown'
+		  				})" />
+		  		</p>
+
+		  		<p class="field" ng-show="excludeFunctionsVisible()">
+		  			<label for="excludeFunctions">Excluded functions</label>
+		  			<input
+		  				type="hidden"
+		  				id="excludeFunctions"
+		  				ng-model="parameters.excludeFunctions"
+		  				placeholder="Type a function name to exclude"
+		  				ui-select2="extend(excludeFunctionsConfig, {
+		  					containerCssClass: 'graphs-select-container',
+		  					dropdownCssClass:  'graphs-select-dropdown'
+		  				})" />
+		  		</p>
+
+		  		<p class="field" ng-show="rootModuleVisible()">
+		  			<label for="rootModule">Starting modules</label>
+		  			<input
+		  				type="hidden"
+		  				id="rootModule"
+		  				ng-model="parameters.rootModule"
+		  				placeholder="Starting modules"
+		  				ui-select2="extend(rootModuleConfig, {
+		  					containerCssClass: 'graphs-select-container',
+		  					dropdownCssClass:  'graphs-select-dropdown'
+		  				})" />
+		  		</p>
+
+				<p class="field" ng-show="connectionModuleVisible()">
+		  			<label for="connectionModule">Connection modules</label>
+		  			<input
+		  				type="hidden"
+		  				id="connectionModule"
+		  				ng-model="parameters.connectionModule"
+		  				placeholder="Connection modules"
+		  				ui-select2="extend(connectionModuleConfig, {
+		  					containerCssClass: 'graphs-select-container',
+		  					dropdownCssClass:  'graphs-select-dropdown'
+		  				})" />
+		  		</p>
+
+		  		<p class="field" ng-show="excludeModulesVisible()">
+		  			<label for="excludeModules">Excluded modules</label>
+		  			<input
+		  				type="hidden"
+		  				id="excludeModules"
+		  				ng-model="parameters.excludeModules"
+		  				placeholder="Type a module name to exclude"
+		  				ui-select2="extend(excludeModulesConfig, {
+		  					containerCssClass: 'graphs-select-container',
+		  					dropdownCssClass:  'graphs-select-dropdown'
+		  				})" />
+		  		</p>
+
+		  		<p class="field" ng-show="excludeOtpVisible()" class="checkbox">
+		  			<label for="excludeOtp">
+		  				<input id="excludeOtp" type="checkbox" ng-model="parameters.excludeOtp" />
+		  				<span>Exclude OTP</span>
+		  			</label>
+		  		</p>
+
+		  		<p class="field" ng-show="noLeafFunctionsVisible()">
+		  			<label for="noLeafFunctions">Functions without leaves</label>
+		  			<input
+		  				type="hidden"
+		  				id="noLeafFunctions"
+		  				ng-model="parameters.noLeafFunctions"
+		  				placeholder="Type a function name",
+		  				ui-select2="extend(noLeafFunctionsConfig, {
+		  					containerCssClass: 'graphs-select-container',
+		  					dropdownCssClass:  'graphs-select-dropdown'
+		  				})" />
+		  		</p>
+
+		  		<p class="field" ng-show="noLeafModulesVisible()">
+		  			<label for="noLeafModules">Modules without leaves</label>
+		  			<input
+		  				type="hidden"
+		  				id="noLeafModules"
+		  				ng-model="parameters.noLeafModules"
+		  				placeholder="Type a module name"
+		  				ui-select2="extend(noLeafModulesConfig, {
+		  					containerCssClass: 'graphs-select-container',
+		  					dropdownCssClass:  'graphs-select-dropdown'
+		  				})" />
+		  		</p>
+
+				<p class="field" ng-show="excludeLibsVisible()">
+		  			<label for="excludeLibs">Excluded libraries</label>
+		  			<input
+		  				type="hidden"
+		  				id="excludeLibs"
+		  				ng-model="parameters.excludeLibs"
+		  				placeholder="Type a regexp or select a directory",
+		  				ui-select2="extend(excludeLibsConfig, {
+		  					containerCssClass: 'graphs-select-container',
+		  					dropdownCssClass:  'graphs-select-dropdown'
+		  				})" />
+		  		</p>
+
+		  		<p class="field" ng-show="subjectsVisible()">
+		  			<label for="subjects">Subjects</label>
+		  			<input
+		  				type="hidden"
+		  				id="subjects"
+		  				ng-model="parameters.subjects"
+		  				placeholder="Type a regexp or select a directory",
+		  				ui-select2="extend(subjectsConfig, {
+		  					containerCssClass: 'graphs-select-container',
+		  					dropdownCssClass:  'graphs-select-dropdown'
+		  				})" />
+		  		</p>
+
+		  		<p class="field">
+		  			<label for="format">Output format</label>
+		  			<select
+		  					id="format"
+		  					ng-model="parameters.format"
+		  					ui-select2="{
+		  						minimumResultsForSearch: 10,
+		  						containerCssClass: 'graphs-select-container',
+		  						dropdownCssClass: 'graphs-select-dropdown'}">
+		  				<option ng-repeat="format in formats" value="{{format.value}}">{{format.text}}</option>
+		  			</select>
+		  		</p>
+
+          <div class="btn-container">
+            <button id="generate" type="button" class="btn btn-primary" ng-show="true" ng-click="generate()">Generate</button>
+            <button ng-show="!true">Send to queue</button>
+            <button ng-show="!true">Cancel</button>
+          </div>
+		  	</div>
+		  </div>
+    </div>
+	</div></div></div>
+
+	<div class="layout-cell history" ng-hide="waiting() || results()" ng-controller="HistoryCtrl" ng-include="'partials/history.html'"></div>
+
+	<div ng-show="waiting() || results()" class="layout-cell main"><div class="inner1"><div class="inner2">
+		<div class="border" ng-switch on="results().type">
+			<p ng-show="waiting()">
+				Please wait for the results...
+			</p>
+
+			<div ng-show="results().error" class="error">
+				<strong>Error while generating the graph:</strong>
+				<p>{{results().error}}</p>
+			</div>
+
+			<div ng-switch-when="text" class="results-text">
+				<p ng-repeat="item in results().list">
+					<em>{{item.from}}</em> -&gt; [{{item.tos.join(", ")}}]
+				</p>
+			</div>
+
+			<div ng-switch-when="svg" class="results-svg" ng-switch on="displaySvg">
+				<ul ng-switch-default>
+					<li>
+						See generated .svg file
+							<a ng-href="/api/download/{{results().svg}}" ng-click="seeSvg($event);">here</a>
+						or
+							<a ng-href="/api/download/{{results().svg}}" target="_blank">in a new window</a>
+					</li>
+					<li>
+						<a ng-href="/api/download/{{results().dot}}">Download generated .dot file</a>
+					</li>
+				</ul>
+				<div class="image" ng-switch-when="true">
+					<img ng-src="/api/download/{{results().svg}}" />
+				</div>
+			</div>
+
+			<div ng-switch-when="smart" class="results-smart">
+        <div re-sigma-graph="results().data"></div>
+			</div>
+
+			<div ng-switch-when="collapsible" class="results-collapsible">
+        <button type="button" class="btn btn-default" data-toggle="modal" data-target="#collapsible-modal">
+          <i class="glyphicon glyphicon-cog"></i>
+          Settings
+        </button>
+        <button id="toggle-animation" type="button" class="btn btn-default" ng-click="toggleCollapsibleAnimation()">
+          <i class="glyphicon {{{true: 'glyphicon-pause', false: 'glyphicon-play'}[collapsibleAnimation]}}"></i>
+        </button>
+        <input type="text" id="graph-search" class="form-control" re-graph-search placeholder="Search..."/>
+        <i id="clear-search" class="glyphicon glyphicon-remove" ng-click="clearSearchResults()"></i>
+        <div re-d3-graph="results().data"></div>
+        <div class="collapsible-settings" ng-include="'partials/collapsible-settings.html'"></div>
+			</div>
+		</div>
+	</div></div></div>
+
+</div>

@@ -1,0 +1,136 @@
+.duplicates {
+
+	.layout-side {
+		div.field {
+			padding-bottom: 8px;
+		}
+
+		label {
+			color: #333;
+			padding-bottom: 3px;
+			display: block;
+		}
+
+		div.oneline {
+			@include pie-clearfix;
+			label {
+				float: left;
+				line-height: 26px;
+			}
+			.input-field {
+				@extend %input;
+				float: right;
+			}
+            input[type=checkbox] {
+                width: 20px;
+            }
+            .number {
+				width: 50px;
+				text-align: right;
+            }
+		}
+
+		p.button {
+			padding-top: 2px;
+			text-align: center;
+			height: 30px;
+		}
+
+
+		button {
+			font-size: 13px;
+	        height: 25px;
+	        padding: 3px 7px;
+		}
+
+		.results {
+			p {
+				color: #333;
+			}
+
+			ul {
+				margin: 0 0 0 15px;
+			}
+
+			a {
+				color: $primary-color;
+				outline: 0;
+				@extend %smart-underline;
+			}
+
+			.selected {
+				a {
+					background: $selection;
+					color: #fff;
+					text-decoration: none;
+				}
+			}
+		}
+	}
+
+	.main .inner2 {
+		padding: 10px 10px 10px 0;
+	}
+
+	.main {
+
+		.border {
+			z-index: 1;
+			height: 100%;
+			background: #fff;
+			border: 1px solid #bbb;
+			@include box-sizing(border-box);
+
+			> p {
+				padding: 5px;
+			}
+
+			.duplicates-panel {
+				height: 100%;
+				position: relative;
+			}
+		}
+
+		button {
+			float: right;
+			@extend %button;
+		}
+
+		.duplicates-select-container {
+			width: 50%;
+		}
+
+		.CodeMirror {
+			@extend %source-viewer;
+			position: absolute;
+			top: 29px;
+			bottom: 0;
+			height: auto;
+		}
+
+		.highlight {
+			background: lighten(#f6f666, 10);
+		}
+
+		.multi-highlight {
+			background: lighten(#f66666, 10);
+		}
+
+	}
+
+}
+
+.duplicates-select-container {
+	width: 100%;
+  .select2-search-choice {
+    top: 2px;
+
+    .select2-search-choice-close {
+      top: 4px;
+    }
+  }
+
+  .select2-search-field > input {
+    margin-top: -4px !important;
+  }
+}

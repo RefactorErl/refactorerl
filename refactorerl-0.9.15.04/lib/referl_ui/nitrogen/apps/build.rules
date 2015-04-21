@@ -1,0 +1,5 @@
+%%% This file has -*- Erlang -*- syntax.
+#invoke{dir="nitrogen"}.
+#invoke{dir="simple_bridge"}.
+#invoke{dir="nprocreg"}.
+

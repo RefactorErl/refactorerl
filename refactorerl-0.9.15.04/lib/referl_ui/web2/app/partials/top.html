@@ -1,0 +1,85 @@
+<div class="top-row">
+	<h1><span>RefactorErl</span></h1>
+	<div class="cell-input" ng-class="{'read-only': isReadOnly()}">
+		<div class="border">
+			<textarea
+				re-query-input
+				re-on-enter="execute()"
+				re-on-tab="onQueryTab()"
+				re-code-mirror
+				ng-model="parameters.queryText"
+				re-read-only="isReadOnly()"
+				re-focus-on="focusQueryInput"
+				placeholder="Type a semantic query here..."
+				></textarea>
+		</div>
+	</div>
+	<p class="cell-from" ng-show="parameters.from" title="{{parameters.from.display}}">
+		FROM {{parameters.from.display}}
+	</p>
+
+  <div class="btn-group">
+    <button type="button" class="btn btn-primary" ng-click="execute()" re-focus-on="focusExecute" ng-class="{disabled: !canExecute()}">Execute</button>
+    <button type="button" class="btn btn-primary dropdown-toggle" data-toggle="dropdown">
+      <span class="caret"></span>
+      <span class="sr-only">Toggle Dropdown</span>
+    </button>
+    <ul class="dropdown-menu execute-dropdown" role="menu">
+      <li ng-show="canExecute()" ng-click="executeInBackground()">Execute in background</li>
+      <li ng-show="canMoveToBackground()" ng-click="toBackground()">Move to background</li>
+      <li ng-show="canCancel()" ng-click="cancel()">Cancel</li>
+      <li ng-click="search()">Search</li>
+      <!-- <li ng-show="parameters.queryText" ng-click="saveAsSkeleton()">Save as skeleton</li> -->
+      <li ng-show="parameters.queryText" data-toggle="modal" data-target="#skeleton-modal">Save as skeleton</li>
+      <li ng-show="!parameters.queryText" ng-click="saveAsSkeleton()">Create skeleton</li>
+      <!-- hidden because the button is not implemented -->
+      <li ng-hide="1">Manage skeletons</li>
+    </ul>
+  </div>
+
+	<!-- hidden because the button is not implemented -->
+	<div class="cell-rest" ng-hide="1">
+		<a class="button">History</a>
+	</div>
+
+	<!-- <div class="cell-rest">
+		<div>
+			<a ng-click="openQueue()" class="button" ng-class="{'tab-header': queueOpen, empty: !getBackgroundUnseenCount()}">
+				Queue
+				<span
+					re-effect="bounce"
+					re-effect-trigger="bounce"
+					ng-class="{active: getBackgroundUnseenCount() - getBackgroundRunningCount() > 0}">
+						{{getBackgroundUnseenCount() - getBackgroundRunningCount()}} / {{getBackgroundUnseenCount()}}
+				</span>
+			</a>
+			<div class="queue-container">
+				<div ui-if="queueOpen" class="queue" ng-controller="QueueCtrl" ng-include="'partials/queue.html'"></div>
+			</div>
+		</div>
+  </div> -->
+  <div class="queue-button">
+  <div class="btn-group">
+    <button type="button" class="btn btn-default" ng-click="openQueue()">
+    	Queue
+    	<span
+    		re-effect="bounce"
+    		re-effect-trigger="bounce"
+    		ng-class="{active: getBackgroundUnseenCount() - getBackgroundRunningCount() > 0}">
+    			{{getBackgroundUnseenCount() - getBackgroundRunningCount()}} / {{getBackgroundUnseenCount()}}
+    	</span>
+    </button>
+    <!-- <a ng-click="openQueue()" class="button" ng-class="{'tab-header': queueOpen, empty: !getBackgroundUnseenCount()}"></a>  -->
+  </div>
+
+      <div class="queue-container">
+        <!-- This queue should be dropdown -->
+      	<div ui-if="queueOpen" class="queue" ng-controller="QueueCtrl" ng-include="'partials/queue.html'"></div>
+      </div>
+  </div>
+
+</div>
+
+<div class="edit-skeleton-container">
+	<div class="edit-skeleton" ng-controller="EditSkeletonCtrl" ng-include="'partials/edit-skeleton.html'"></div>
+</div>

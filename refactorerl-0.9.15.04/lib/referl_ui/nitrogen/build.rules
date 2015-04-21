@@ -1,0 +1,4 @@
+%%% This file has -*- Erlang -*- syntax.
+
+#invoke{dir="apps"}.
+#invoke{dir="site"}.

@@ -1,0 +1,42 @@
+<div class="auto-completion" ui-if="visible">
+	<div class="hints">
+		<ul>
+			<li
+				ng-repeat="hint in hints"
+				ng-class="{selected: selected == hint}"
+				ng-mouseover="select(hint)" ng-click="insert(hint)"
+				re-scroll-to-here="selected == hint">
+					{{hint.displayText}}
+			</li>
+		</ul>
+	</div>
+	<div class="details" ng-show="selected.details"><div>
+		<h3>{{selected.text}}</h3>
+		<dl>
+			<dt ng-show="selected.details.type">
+				Type
+			</dt>
+			<dd ng-show="selected.details.type" class="monospace">
+				{{selected.details.type}}
+			</dd>
+			<dt ng-show="selected.details.names.length > 1">
+				Synonyms
+			</dt>
+			<dd ng-show="selected.details.names.length > 1" class="monospace">
+				{{selected.details.names.join(", ")}}
+			</dd>
+			<dt ng-show="selected.details.desc">
+				Description
+			</dt>
+			<dd ng-show="selected.details.desc">
+				{{selected.details.desc}}
+			</dd>
+			<dt ng-show="selected.details.source">
+				Skeleton source
+			</dt>
+			<dd ui-if="selected.details.source" class="monospace"
+				ng-bind-html-unsafe="selected.details.source | highlight:sourceHighlighter">
+			</dd>
+		</dl>
+	</div></div>
+</div>

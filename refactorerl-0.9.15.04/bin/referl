@@ -1,0 +1,446 @@
+#!/bin/bash
+
+# Unix shell script that starts RefactorErl. The same command line can be used
+# on all platforms to start the server.
+
+help_exit(){
+        cat <<HELP >&2
+Usage: $0 [Option]...
+Starts RefactorErl, by default using the current working directory as data directory.
+
+Recognised options:
+  -build TARGET       Build TARGET (e.g. tool, doc, clean)
+  -bufsrv             Build bufferserver (use with '-build tool')
+  -skip_ui            Skip lib/referl_ui compilation
+  -igraph PATH        Path to the Igraph lib directory
+  -client             Start in client mode (no server is started)
+  -db DB              [mnesia|nif|kcmini] The database engine to use (default: mnesia)
+  -dir DIR            Sets the RefactorErl data directory
+  -base PATH          Path to the RefactorErl base directory
+  -pos POS            [abs|rel] The positioning mode to use (default: abs)
+  -erl PATH           Path to the Erlang executable to use
+  -g++ PATH           Path of the g++ compiler to use
+  -gcc PATH           Path of the c compiler to use
+  -synchronize        Database synchronization
+  -qt_gui             Build Qt GUI
+  -help               Print this help text
+
+  -server             Start in server mode (no shell is started)
+  -sname NAME         Short name of the Erlang node
+  -name NAME          Full name of the Erlang node
+  -srvname NAME       Name of the Erlang server node to connect
+  -client             Start in client mode (no server is started)
+
+  -emacs              Start as an Emacs client
+  -vim                Start as a Vim client
+  -wx                 Start as a Wx client
+
+  -nitrogen           Start with Nitrogen
+  -web2               Start with Web2
+  -yaws_path PATH     Path to the Yaws ebin directory (need /ebin at the end)
+  -yaws_name NAME     Set Yaws server name
+  -yaws_port PORT     Set Yaws port
+  -yaws_listen IP     Set Yaws IP
+  -browser_root       Set the file browser root directory
+  -images_dir         Set root directory where generated Nitrogen images will be written
+
+  -restricted_mode    Set restricted mode on the web interface or  on a RefactorErl started as server
+
+HELP
+        exit
+#  -wrangler PATH   Path to a Wrangler installation
+}
+
+# Set defaults
+ERL=erl
+BASE=`pwd`
+SERVER=yes
+CLIENT=no
+CPP_COMPILER="g++"
+C_COMPILER="gcc"
+COMPILE_QT="false"
+NAME_TYPE=-sname
+NAME=refactorerl@localhost
+SRVNAME=refactorerl@localhost
+YNAME=referl
+YPATH=no_path
+YPORT=8001
+YLISTEN=0.0.0.0
+BROWSER_ROOT=no_path
+RESTRICTED_MODE=false
+IMGDIR=`pwd`
+YAWS189="false"
+MNESIA=""
+DBMOD="-dbmod refdb_mnesia"
+DBARGS="-dbargs []"
+COMPILE_CPP="true"
+POSMOD="-pos default"
+SYNC=""
+COMPILE_BUFSRV="false"
+ERICSSON="false"
+IGRAPH="false"
+ETS_LIMIT=32000
+IGRAPHPATH=""
+
+# If $REFERL_DIR is set, we use it as the base directory of Mnesia.
+# Also, RefactorErl will save all other files in this directory.
+# If $REFERL_DIR is not set, the system uses `pwd` as default.
+# This can be overridden by the -dir option.
+if [ ! $REFERL_DIR ]; then
+    REFERL_DIR="`pwd`/data"
+fi
+
+# Interpret arguments
+function handleArgs() {
+while [ $# -gt 0 ]
+do
+    if [ "$1" = -erl ]
+    then
+        ERL="$2"
+        shift 2
+    elif [ "$1" = -base ]
+    then
+        BASE="$2"
+        shift 2
+    elif [ "$1" = -name ] || [ "$1" = -sname ]
+    then
+        NAME_TYPE="$1"
+        NAME="$2"
+        shift 2
+    elif [ "$1" = -srvname ]
+    then
+        SRVNAME="$2"
+        shift 2
+    elif [ "$1" = -server ]
+    then
+        SERVER=yes
+        CLIENT=server
+        shift
+    elif [ "$1" = -emacs ]
+    then
+        CLIENT=emacs
+        shift
+    elif [ "$1" = -wx ]
+    then
+        CLIENT=wx
+        shift
+    elif [ "$1" = -qt ]
+    then
+        CLIENT=qt
+        shift
+    elif [ "$1" = -vim ]
+    then
+        CLIENT=vim
+        shift
+	elif [ "$1" = -nitrogen ]
+    then
+        CLIENT=nitrogen
+        shift
+    elif [ "$1" = -web2 ]
+    then
+        CLIENT=web2
+        shift
+    elif [ "$1" = -browser_root ]
+    then
+        BROWSER_ROOT="$BROWSER_ROOT $2"
+        shift 2
+    elif [ "$1" = -images_dir ]
+    then
+        IMGDIR="$2"
+        shift 2
+    elif [ "$1" = -restricted_mode ]
+    then
+        RESTRICTED_MODE="true"
+        shift
+    elif [ "$1" = -yaws ]
+    then
+        CLIENT=yaws
+        shift
+    elif [ "$1" = -yaws_path ]
+    then
+        YPATH="$2"
+        shift 2
+    elif [ "$1" = -yaws_name ]
+    then
+        YNAME="$2"
+        shift 2
+    elif [ "$1" = -yaws_port ]
+    then
+        YPORT="$2"
+        shift 2
+    elif [ "$1" = -yaws_listen ]
+    then
+        YLISTEN="$2"
+        shift 2
+    elif [ "$1" = -g++ ]
+    then
+        CPP_COMPILER="$2"
+        shift 2
+    elif [ "$1" = -gcc ]
+    then
+        C_COMPILER="$2"
+        shift 2
+    elif [ "$1" = -build ]
+    then
+        CLIENT=build
+        SERVER=no
+        NAME=build
+        TARGET="$2"
+        shift 2
+	elif [ "$1" = -no_cpp ]
+    then
+        COMPILE_CPP="false"
+        shift 1
+    elif [ "$1" = -bufsrv ]
+    then
+        COMPILE_BUFSRV="true"
+        shift 1
+    elif [ "$1" = -ericsson ]
+    then
+        ERICSSON="true"
+        shift 1
+    elif [ "$1" = -igraph ]
+    then
+        IGRAPH="true"
+        IGRAPHPATH="$2"
+        shift 2
+    elif [ "$1" = -yaws_189 ]
+    then
+        YAWS189="true"
+        shift 1
+    elif [ "$1" = -client ]
+    then
+        SERVER=no
+        shift
+    elif [ "$1" = -synchronize ]
+    then
+        SYNC=" -s ri database_synchronization"
+        shift
+    elif [ "$1" = -wrangler ]
+    then
+        WRANGLER="$2"
+        shift 2
+    elif [ "$1" = -help ]
+    then
+        help_exit
+    elif [ "$1" = -db ]
+    then
+        if [ "$2" = mnesia ]
+        then
+            DBMOD="-dbmod refdb_mnesia"
+            DBARGS="-dbargs []"
+        elif [ "$2" = nif ]
+        then
+            DBMOD="-dbmod refdb_nif"
+            DBARGS="-dbargs []"
+	elif [ "$2" = kcmini ]
+	then
+	    DBMOD="-dbmod refdb_kyotomini"
+	    DBARGS="-dbargs []"
+        else
+            echo >&2
+            echo "[WARNING] Unsupported database mode: '$2'." >&2
+            echo "Halting..." >&2
+            echo >&2
+            exit
+        fi
+        shift 2
+    elif [ "$1" = -dbmod ]
+    then
+        DBMOD="-dbmod $2"
+        shift 2
+    elif [ "$1" = -dir ]
+    then
+        REFERL_DIR="$2"
+        shift 2
+    elif [ "$1" = -dbargs ]
+    then
+        DBARGS="-dbargs $2"
+        shift 2
+    elif [ "$1" = -pos ]
+    then
+        POSMOD="-pos $2"
+        shift 2
+    elif [ "$1" = -qt_gui ]
+    then
+        COMPILE_QT="true"
+        shift 1
+    elif [ "$1" = -skip_ui ]
+    then
+        REFERL_SKIP_UI_COMPILATION="skip"
+        shift
+    else
+        echo "error: unknown argument: '$1'!" >&2
+        echo >&2
+        help_exit
+    fi
+done
+}
+
+# User configuration file
+# single entries are just plain strings like: -nitrogen
+# entries with user defined second argument are tuples eg.: {-erl, path_to_erl}
+# example user configuration file:
+#
+# %{erl,path_to_erl}
+# %{base,basedir}
+# %{name,instancename}
+# %{sname,servername}
+# %{srvname,yourservername}
+# % server
+# % emacs
+# % wx
+# % qt
+# % vim
+# % nitrogen
+# % web2
+# %{browser_root,browserroot}
+# %{images_dir,imgdir}
+# % yaws
+# %{yaws_path,path}
+# %{yaws_name,name}
+# %{yaws_port,port}
+# %{yaws_listen,ipaddress}
+# % gcc
+# % g++
+# % build
+# % no_cpp
+# % bufsrv
+# % ericsson
+# %{igraph,path}
+# % yaws_189
+# % client
+# % synchronize
+# %{wrangler,path}
+# % dbtype = mnesia nif kcmini
+# %{db,dbtype}
+# %{dbmod,dbmod}
+# %{dir,referldir}
+# %{dbargs,dbargs}
+# %{pos,posi}
+# % qt_gui
+function loadUserCfg() {
+   configfile=$1
+   verbose=$2
+   if [ -f ${configfile} ];then
+      if [[ "${verbose}" = "true" ]]; then
+         echo "Loading user configuration: ${configfile}"
+      fi
+      while read line ; do   
+         # skip commented lines (erlang style comments start with % percent sign)
+         [[ "${line}" =~ ^%.*$ ]] && continue
+         # skip empty lines
+         [[ -z "${line}" ]] && continue
+         # read tuple as ^{variablename,value}$
+         # currently spaces are not allowed
+         IFS='{,}' read -a array <<< "${line}"
+         if [ ${#array[@]} -eq 1 ]; then
+            # single entries
+            [[ "${verbose}" = "true" ]] &&  echo ${array[0]}
+            configargs="${configargs} -${array[0]}"
+         elif [ ${#array[@]} -eq 3 ]; then
+            # tuples
+            [[ "${verbose}" = "true" ]] &&  echo "${array[1]} ${array[2]}"
+            configargs="${configargs} -${array[1]} ${array[2]}"
+         fi
+      done < ${configfile}
+      IFS=" "
+   fi
+}
+
+# load configuration
+loadUserCfg ~/.referlrc true
+# handle arguments from configuration file
+handleArgs ${configargs}
+# handle command line arguments as usual (overrides user configuration)
+handleArgs $*
+# Makes the directory that will store all data that pertains to RefactorErl.
+mkdir -p $REFERL_DIR
+
+# Ensures that RefactorErl has the appropriate permission for its data directory.
+RIGHT_OK=ok
+if [ -d $REFERL_DIR ] && [ -w $REFERL_DIR ] && [ -x $REFERL_DIR ] && [ -r $REFERL_DIR ];
+then
+    for filename in `ls $REFERL_DIR`
+    do
+        [ -w "$REFERL_DIR/$filename" ] && [ -r "$REFERL_DIR/$filename" ] || RIGHT_OK="$REFERL_DIR/$filename"
+    done
+else
+    RIGHT_OK="$REFERL_DIR"
+fi
+if [ $RIGHT_OK != ok ]
+then
+    echo "RefactorErl does not have the appropriate permission for $RIGHT_OK."
+    echo "Halting..."
+    exit
+fi
+
+
+# Set extra arguments
+[ $CLIENT = server ] && ARGS="-noinput -restricted_mode $RESTRICTED_MODE"
+[ $CLIENT = emacs ]  && ARGS="-noshell -s referl_emacs start $SRVNAME"
+[ $CLIENT = vim ]  && ARGS="-noshell -s referl_vim start $SRVNAME"
+[ $CLIENT = wx ]  && ARGS="-noshell -s referl_wx start $SRVNAME"
+[ $CLIENT = qt ]  && ARGS="-noshell -s referl_qt start $SRVNAME"
+[ $CLIENT = yaws ]  && ARGS="-noshell -run web_helper start_yaws from_script
+ $YPATH $YNAME $YPORT $YLISTEN"
+[ $CLIENT = nitrogen ]  && ARGS="-noshell -run referl_ui_nitrogen_core start_nitrogen from_script
+ $YPATH $YNAME $YPORT $YLISTEN $IMGDIR $RESTRICTED_MODE $BROWSER_ROOT"
+[ $CLIENT = web2 ]  && ARGS="-noshell -run referl_ui_web2 start from_script $YPATH $YPORT
+ $YLISTEN $RESTRICTED_MODE $BROWSER_ROOT"
+[ $CLIENT = build ]  && ARGS="-noshell -run referl_gen_build start $TARGET"
+
+
+# The following feature appeared in R12B-2:
+export ERL_LIBS="$BASE/lib"
+# Other possibility, which only works in Unix:
+# -pa "$BASE/lib"/*/ebin
+
+rm -f "${BASE}metricmode.dat"
+
+export COMPILE_CPP
+export CPP_COMPILER
+export C_COMPILER
+export YAWS189
+export COMPILE_BUFSRV
+export ERICSSON
+export IGRAPH
+export IGRAPHPATH
+export COMPILE_QT
+export ETS_LIMIT
+
+MNESIA="-mnesia dir '$REFERL_DIR'"
+
+if [ $SERVER = yes ]
+then
+    "$ERL" \
+        -smp \
+        $NAME_TYPE  "$NAME" \
+        -config "$BASE/sys.config" \
+        -boot   "$BASE/refactorerl" \
+        -s reflib_ui_router set_ref_node server $NAME \
+        -env ERL_MAX_ETS_TABLES $ETS_LIMIT \
+        $SYNC \
+        ${WRANGLER:+-pa} ${WRANGLER:+"$WRANGLER"} \
+        +W "w" \
+        +K true \
+        $MNESIA \
+        $DBMOD $DBARGS \
+        $POSMOD \
+        $ARGS
+elif [ $CLIENT = build ]
+then
+    "$ERL" -make
+
+    "$ERL" \
+        -env ERL_MAX_ETS_TABLES $ETS_LIMIT \
+        -env YAWS_EBIN ${YPATH} \
+        -env REFERL_SKIP_UI_COMPILATION "${REFERL_SKIP_UI_COMPILATION}" \
+        $NAME_TYPE  "$NAME" \
+        $ARGS
+else
+    "$ERL" \
+        $NAME_TYPE  "$NAME" \
+        -s reflib_ui_router set_ref_node $SRVNAME \
+        $ARGS
+fi

@@ -1,0 +1,4 @@
+<erl>
+    -include_lib("referl_ui/src/ui.hrl").
+    out(Arg) -> referl_ui_web2_appmod:serve_index(Arg).
+</erl>

@@ -1,0 +1,58 @@
+/*.database-status-mask {
+	@extend %mask;
+	@include transition(opacity 0.4s ease);
+
+	&.light {
+		opacity: 0.08;
+	}
+}*/
+
+.modals-content {
+	color: #333;
+
+	h4 {
+		color: rgba(#000, 0.70);
+		font-weight: bold;
+		font-size: 20px;
+		margin: 0;
+	}
+
+	p, dl {
+		margin: 10px 0;
+	}
+
+	dt {
+		font-weight: bold;
+	}
+
+	dd {
+		padding: 0 0 0 20px;
+    overflow-wrap: break-word;
+	}
+
+	.progress {
+		@extend %progress;
+		margin: 10px auto 0;
+		width: 100%;
+	}
+
+	.warning {
+		color: $error-color;
+		font-style: italic;
+	}
+
+	.buttons {
+		text-align: center;
+		margin: 15px 0 0;
+	}
+
+	.left {
+		float: left;
+	}
+
+	button {
+		@extend %button;
+		padding-left:  $button-padding-horizontal + 10;
+		padding-right: $button-padding-horizontal + 10;
+	}
+}

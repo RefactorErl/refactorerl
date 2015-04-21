@@ -1,0 +1,485 @@
+@import "compass/css3/images";
+@import "compass/css3/user-interface";
+@import "../lib/fonts/dejavu-sans-mono/stylesheet.css";
+@import "../lib/fonts/icomoon/font.css";
+@import "../lib/fonts/icomoon/icons";
+@import "../lib/fonts/oswald/style.css";
+@import "../lib/hint.css/hint.css";
+
+// reset all margins and paddings
+* {
+	margin: 0;
+	padding: 0;
+}
+
+// disable different button sizing in firefox
+button::-moz-focus-inner {
+	border: 0 none;
+	padding: 0;
+}
+
+// underline by default, remove underline on hover
+%smart-underline {
+	text-decoration: underline;
+	&:hover {
+		text-decoration: none;
+	}
+}
+
+// Full screen semi-opaque layer.
+// You might want to override the default z-index (9)
+%mask {
+	position: fixed;
+	z-index: 9;
+	top: 0;
+	left: 0;
+	height: 100%;
+	width: 100%;
+	background: #000;
+	opacity: 0.2;
+}
+
+// buttons in button group are horizontally joined
+.button-group {
+	// zero font-size to not have space between the buttons
+	font-size: 0;
+}
+
+// button without colors, see button-colors mixin or use %button
+%abstract-button {
+	@include box-sizing(border-box);
+	cursor: pointer;
+	padding: $button-padding-vertical $button-padding-horizontal;
+	display: inline-block;
+	vertical-align: middle;
+	font-size: 12px;
+	font-size: 12px;
+	font-weight: bold;
+	border: 1px solid transparent; // color will be set by the button-colors mixin
+	font-family: $default-font;
+
+	@include text-shadow(none);
+	@include box-shadow(rgba(#000, 0.15) 0 1px 2px);
+	@include border-radius($button-border-radius);
+	@include user-select(none);
+
+	.button-group > & {
+		@include border-radius(0 0 0 0);
+		border-left-width: 0;
+	}
+	.button-group > &:first-child {
+		@include border-radius($button-border-radius 0 0 $button-border-radius);
+		border-left-width: 1px;
+	}
+	.button-group > &:last-child {
+		@include border-radius(0 $button-border-radius $button-border-radius 0);
+	}
+
+	&.disabled,
+	&:disabled,
+	&[disabled=disabled] {
+		cursor: default;
+	}
+}
+
+// Mixin to define the colors of an %abstract-button
+@mixin button-colors($bg-start, $bg-end, $border, $text: #666, $lighten: 3%) {
+	border-color: $border;
+	background: $bg-start;
+	color: $text;
+
+	@include background-image(linear-gradient(color-stops(
+		$bg-start 0%,
+		$bg-start 30%,
+		$bg-end 100%)));
+
+	&.active,
+	&:active,
+	&:hover,
+	&:focus {
+		outline: 0;
+		@include background-image(linear-gradient(color-stops(
+			lighten($bg-start, $lighten) 0%,
+			lighten($bg-start, $lighten) 30%,
+			lighten($bg-end,   $lighten) 100%)));
+		@include box-shadow(rgba(#000, 0.3) 0 1px 2px);
+	}
+
+	&.active,
+	&:active {
+		@include box-shadow(0 1px 5px darken($border, 10%) inset);
+	}
+
+	&.disabled,
+	&:disabled,
+	&[disabled],
+	&[disabled=disabled] {
+		opacity: 0.9;
+		color: rgba($text, 0.5);
+		background: $bg-start;
+		@include box-shadow(none);
+		@include text-shadow(rgba(#fff, 1) 0 1px 1px);
+	}
+}
+
+// Normal, gray button
+%button {
+	@extend %abstract-button;
+	@include button-colors($button-bg-from, $button-bg-to, $button-border);
+}
+
+// Primary button (probably blueish)
+%primary-button {
+	@extend %abstract-button;
+	@include text-shadow(rgba(#000, 0.5) 0 -1px 1px);
+	@include button-colors(
+		$primary-button-bg-from,
+		$primary-button-bg-to,
+		$primary-button-bg-border,
+		$primary-button-text
+	);
+
+	&.disabled,
+	&:disabled,
+	&[disabled],
+	&[disabled=disabled] {
+		opacity: 0.75;
+		color: $primary-button-text;
+		@include text-shadow(none);
+	}
+}
+
+// Default input style with a light background gradient and
+// highlighted border on focus. Can be applied to input[text],
+// textarea or .CodeMirror element. In case of .CodeMirror
+// the height should be probably adjusted.
+%input {
+	outline: none;
+	border: 1px solid #aaa;
+	height: 26px;
+	padding: 3px 5px;
+	@include box-sizing(border-box);
+	@include background-image(linear-gradient(color-stops(#eee 1%, #fff 15%)));
+
+	&.CodeMirror-focused,
+	&:focus {
+		border-color: $focused-input-border;
+		@include box-shadow(rgba(#000, 0.3) 0 0 5px);
+	}
+}
+
+// Default styles of an erlang source viewer .CodeMirror component.
+%source-viewer {
+	width: 100%;
+	height: 100%;
+	font-family: $monospace-font;
+	line-height: 1.2em;
+	background: #fff;
+	font-size: 13px;
+
+	.CodeMirror-selected,
+	.CodeMirror-selectedtext {
+		background: $source-viewer-selection;
+		color: #fff;
+	}
+
+	.CodeMirror-cursor {
+		display: none;
+	}
+
+	&.CodeMirror-empty .CodeMirror-linenumber {
+		visibility: hidden;
+	}
+}
+
+.context-menu-list {
+	z-index: 1001 !important; /* sometimes it is set to 1... */
+}
+
+// Overrides the default jquery.contextMenu style for a more native look.
+//   -- at least for windows...
+%context-menu-defaults {
+	font-family: "Tahoma", $default-font;
+	font-size: 11px;
+	background: $context-menu-bg;
+	border: 1px solid #a0a0a0;
+	padding: 2px;
+
+	.context-menu-item {
+		// reason 1: feels more native
+		// reason 2: copy does not support hand cursor
+		cursor: default;
+		padding: 2px 8px 2px 22px;
+		background: $context-menu-bg;
+		color: #333;
+
+		&.hover {
+			background-color: $context-menu-active;
+			color: #fff;
+		}
+
+		&.disabled {
+			color: #666;
+		}
+
+		.context-menu-input.hover,
+		.context-menu-item.disabled.hover {
+			background-color: $context-menu-bg;
+			color: #666;
+		}
+	}
+
+	.context-menu-separator {
+		background-color: #909090;
+		border-bottom: 1px solid #fff;
+		height: 1px;
+		padding: 0;
+		margin: 3px 0;
+	}
+}
+
+// Customized select2 container
+%select2-container {
+	&.select2-container-multi.select2-container-active .select2-choices,
+	&.select2-container-active .select2-choice,
+	&.select2-container-active .select2-choices {
+		border: 1px solid $focused-input-border;
+	}
+
+	&.select2-container-multi .select2-choices {
+		padding-right: 5px;
+	}
+
+	.select2-choice abbr {
+		top: 7px;
+	}
+}
+
+// Customized select2 dropdown
+%select2-dropdown {
+	line-height: 12px;
+	font-size: 12px;
+	border-color: $focused-input-border;
+
+	.select2-results .select2-highlighted {
+		background: $select2-active-bg;
+		color: #fff;
+	}
+
+	.select2-no-results,
+	.select2-searching,
+	.select2-more-results {
+		background-color: transparent;
+		padding: 3px;
+		color: #666;
+		font-style: italic;
+	}
+}
+
+// Generic tree with openable item and arrow effect
+%tree {
+	li {
+		list-style: none;
+		min-height: 16px;
+	}
+
+	ul {
+		padding: 0 0 0 14px;
+	}
+
+	.before {
+		float: left;
+		width: 16px;
+		height: 16px;
+		color: #333;
+	}
+
+	.re-label {
+		display: block;
+    margin: 0;
+		padding-left: 2px;
+		@include ellipsis;
+		@include user-select(none); // for the doubleclick
+	}
+
+	.openable {
+		> .before {
+			cursor: pointer;
+		}
+
+		> .before i {
+			line-height: 16px;
+			margin: 0 0 0 6px;
+			display: block; // required for rotation
+			font-size: 12px;
+			@extend .icon-caret-right;
+			@include transition(transform 0.15s);
+			@include transform(rotate(0deg));
+		}
+
+		&.open > .before i {
+			@include transform(rotate(90deg) translateX(3px) translateY(3px));
+		}
+	}
+}
+
+// Generic file browser tree with open/closed folders
+// and file type <-> icon associations.
+%file-browser {
+	@extend %tree;
+
+	.before {
+		background: url(../img/file.png) 0 50% no-repeat;
+	}
+
+	.openable > .before {
+		background: none;
+	}
+
+	.loading > .before {
+		background: url(../img/spinner.gif) 0 50% no-repeat;
+		i {
+			display: none;
+		}
+	}
+
+	.re-label {
+		cursor: pointer;
+	}
+
+	.selected > .re-label {
+		color: #fff;
+		background: $selection;
+		@include border-radius(3px 3px 3px 3px);
+	}
+
+	.ext-erl .before,
+	.ext-hrl .before,
+	.ext-rules .before,
+	.ext-appspec .before {
+		background-image: url(../img/erlang.png);
+	}
+
+	.ext-bat .before,
+	.ext-exe .before {
+		background-image: url(../img/application.png);
+	}
+
+	.ext-log .before,
+	.ext-txt .before {
+		background-image: url(../img/txt.png);
+	}
+
+	.ext-zip .before {
+		background-image: url(../img/zip.png);
+	}
+
+	.ext-sh .before {
+		background-image: url(../img/linux.png);
+	}
+
+	.ext-xml .before,
+	.ext-html .before,
+	.ext-makefile .before,
+	.ext-Makefile .before,
+	.ext-Emakefile .before {
+		background-image: url(../img/code.png);
+	}
+}
+
+// cross-browser keyframes mixin
+@mixin keyframes($name) {
+	@-webkit-keyframes #{$name} {
+		@content;
+	}
+	@-moz-keyframes #{$name} {
+		@content;
+	}
+	@-ms-keyframes #{$name} {
+		@content;
+	}
+	@keyframes #{$name} {
+		@content;
+	}
+}
+
+@include keyframes(progress-bar-stripes) {
+	from {
+		background-position: 40px 0;
+	}
+	to {
+		background-position: 0 0;
+	}
+}
+
+// cross-browser animation mixin
+@mixin animation($animation) {
+	@include experimental(animation, $animation, -moz, -webkit, -o, -ms, not -khtml, official);
+}
+
+// progress bar (animating when "active" class is on it)
+%progress {
+	height: 20px;
+	margin-bottom: 20px;
+	overflow: hidden;
+	background-color: #f7f7f7;
+	background-repeat: repeat-x;
+	@include background-image(linear-gradient(color-stops(#f5f5f5 0%, #f9f9f9 100%)));
+	@include border-radius(3px);
+	@include box-shadow(
+		rgba(#000, 0.1) 0 1px 2px inset,
+		rgba(#000, 0.15) 0 1px 2px
+	);
+
+	> .bar {
+		float: left;
+		width: 0;
+		height: 100%;
+		font-size: 12px;
+		color: #fff;
+		text-align: center;
+		line-height: 20px;
+		text-shadow: 0 1px 4px rgba(#000, 0.75);
+		background-color: $progress-bar-color;
+		background-repeat: repeat-x;
+		@include box-shadow(rgba(#000, 0.15) 0 -1px 0 inset);
+		@include box-sizing(border-box);
+		@include background-size(40px 40px);
+		@include background-image(linear-gradient(45deg, color-stops(
+			rgba(#fff, 0.15) 25%,
+			transparent 25%,
+			transparent 50%,
+			rgba(#fff, 0.15) 50%,
+			rgba(#fff, 0.15) 75%,
+			transparent 75%,
+			transparent)
+		));
+	}
+
+	&.active > .bar {
+		@include animation(progress-bar-stripes 2s linear infinite);
+	}
+}
+
+// hint.css customizations for a softer, cleaner style
+.hint--top:before {
+	border-top-color:    $hint-css-bg;
+}
+.hint--bottom:before {
+	border-bottom-color: $hint-css-bg;
+}
+.hint--left:before {
+	border-left-color:   $hint-css-bg;
+}
+.hint--right:before {
+	border-right-color:  $hint-css-bg;
+}
+[data-hint]:after {
+	padding: 6px 8px;
+	background-color: $hint-css-bg;
+	@include border-radius(3px);
+	@include box-shadow(rgba(#000, 0.2) 1px 1px 2px);
+}
+[data-hint]:before, [data-hint]:after {
+	@include transition(opacity 0.3s);
+}

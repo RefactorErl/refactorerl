@@ -1,0 +1,486 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Strict//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-strict.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<meta http-equiv="Connection" content="keep-alive" />
+<title>[[[page:title()]]]</title>
+<script src='/static?file=nitrogen/jquery.js' type='text/javascript' charset='utf-8'></script>
+<script src='/static?file=nitrogen/jquery-ui.js' type='text/javascript' charset='utf-8'></script>
+<script src='/static?file=nitrogen/menu.js' type='text/javascript' charset='utf-8'></script>
+<script src='/static?file=nitrogen/livevalidation.js' type='text/javascript' charset='utf-8'></script>
+<script src='/static?file=nitrogen/nitrogen.js' type='text/javascript' charset='utf-8'></script>
+<script src='/static?file=nitrogen/bert.js' type='text/javascript' charset='utf-8'></script>
+<script src='/static?file=nitrogen/jquery.jsPlumb-1.3.10-all-min.js' type='text/javascript'></script>
+<script src='/static?file=nitrogen/jquery.zoomooz.min.js' type='text/javascript'></script>
+<script src="/static?file=nitrogen/jquery_file_tree/jqueryFileTree.js" type="text/javascript"></script>
+<script src="/static?file=nitrogen/jquery.toastmessage.js" type="text/javascript"></script>
+<link href="/static?file=nitrogen/jquery_file_tree/jqueryFileTree.css" rel="stylesheet" type="text/css" media="screen" />
+<link rel="stylesheet" href="/static?file=nitrogen/jquery-ui/jquery.ui.all.css" type="text/css" media="screen" charset="utf-8" />
+<link rel="stylesheet" href="/static?file=nitrogen/nitrogen.css" type="text/css"/>
+<link rel="stylesheet" href="/static?file=css/jquery-ui-1.8.13.custom.css" type="text/css"/>
+<link rel="stylesheet" href="/static?file=css/style.css" type="text/css"/>
+
+</head>
+<body>
+<div id="container">
+<div id="header" class="wfid_pagetop">
+<h1>RefactorErl</h1>
+<div id="menu">
+<table>
+<tr style="margin:5px;">
+<td id="menu_queries" onMouseOver="javascript:activateMenu(this);" onMouseClick="javascript:activateMenu(this);" onMouseOut="javascript:inactivateMenu(this);"><a href="/main">Queries</a></td>
+<td id="menu_files" onMouseOver="javascript:activateMenu(this);" onMouseClick="javascript:activateMenu(this);" onMouseOut="javascript:inactivateMenu(this);"><a href="/files">Admin</a></td>
+<td id="menu_errors" onMouseOver="javascript:activateMenu(this);" onMouseClick="javascript:activateMenu(this);" onMouseOut="javascript:inactivateMenu(this);"><a href="/errors">Errors</a></td>
+<td id="menu_graph" onMouseOver="javascript:activateMenu(this);" onMouseClick="javascript:activateMenu(this);" onMouseOut="javascript:inactivateMenu(this);"><a href="/graphs">Dependency Graphs</a></td>
+<!--<td id="menu_codedups" onMouseOver="javascript:activateMenu(this);" onMouseClick="javascript:activateMenu(this);" onMouseOut="javascript:inactivateMenu(this);"><a href="/codedups">Code Duplicates</a></td> -->
+<td id="menu_invs" onMouseOver="javascript:activateMenu(this);" onMouseClick="javascript:activateMenu(this);" onMouseOut="javascript:inactivateMenu(this);"><a href="/investigations">Investigations</a></td>
+<td id="menu_logout" onMouseOver="javascript:activateMenu(this);" onMouseClick="javascript:activateMenu(this);" onMouseOut="javascript:inactivateMenu(this);">[[[page:logout()]]]</td>
+</tr>
+<tr>
+<td align="center" valign="top"><img src="images/menu.png" id="menu_queries_img" class="menu_item"/></td>
+<td align="center" valign="top"><img src="images/menu.png" id="menu_files_img" class="menu_item"/></td>
+<td align="center" valign="top"><img src="images/menu.png" id="menu_errors_img" class="menu_item"/></td>
+<td align="center" valign="top"><img src="images/menu.png" id="menu_graph_img" class="menu_item"/></td>
+<!--<td align="center" valign="top"><img src="images/menu.png" id="menu_codedups_img" class="menu_item"/></td> -->
+<td align="center" valign="top"><img src="images/menu.png" id="menu_invs_img" class="menu_item"/></td>
+<td align="center" valign="top"><img src="images/menu.png" id="menu_logout_img" class="menu_item"/></td>
+</tr>
+</table>
+</div>
+</div>
+[[[page:other()]]]
+<div id="invtabs">
+[[[page:menu()]]]
+<div id="inv_tabs">
+   <ul>
+      <li><a href="#saved_invs">Saved Investigations</a></li>
+      <li><a href="#last_res">Last Result</a></li>
+   </ul>
+<div id="saved_invs">
+<h2>Saved investigations</h2>
+[[[page:saved_invs()]]]
+</div>
+<div id="last_res">
+<h2>Last Result</h2>
+[[[page:last_result()]]]
+</div>
+</div>
+</div>
+<div id="invwrapper">
+[[[page:investigations()]]]
+</div>
+[[[page:get_startnode()]]]
+<script>
+[[[script]]]
+
+function showHideDataRow(clicked){
+	var classes = clicked.attr("class").split(" ");
+	var group = undefined;
+	window.jQuery.each(classes, 
+		function(ind,cl){
+			if (/group/i.test(cl)){
+				group = cl;
+				return false;
+			}
+		});
+	var target = ".data."+group;
+    if($(".headtxt."+group).text()=="Hide") 
+        $(".headtxt."+group).html('Show');
+    else
+        $(".headtxt."+group).html('Hide');
+	$(target).toggle();
+}
+
+function calculateRelativePosition(window,nodename){
+    var node;
+    var nodes=document.getElementsByName(nodename);
+    for(var i=0;i<nodes.length;i++) 
+        if(jQuery.contains(window,nodes[i])) 
+        {
+            node=nodes[i];
+            break;
+        }
+    if(node!=null) $(node).addClass('inv_startnode');
+    /*return [($(node).offset().left-$(window).offset().left+$(node).width())/$(window).width(),
+    ($(node).offset().top-$(window).offset().top+$(node).height())/$(window).height(), 0, 1];*/
+    return [1,0.5,1,0];
+}
+
+function scrolltonode(elem,window){
+	$(window).scrollTop(0);
+	var range = document.createRange();
+	range.setStart(elem,0);
+	range.setEnd(elem,1);
+	var y=range.getBoundingClientRect().top;
+	$(window).scrollTop(y-$(window).offset().top-100);
+}
+
+function generatelinenums(text,container,startline){
+	var s="";
+	var l=countlines(text);
+    for(var i=startline;i<=l+startline;i++)
+		s+=i+"<br>";
+	container.innerHTML=s;
+}
+
+function countlines(el){
+	var sum=0;
+    $(el).contents().each(function(i,e){
+		if(e.tagName=="BR") sum++;
+        if (e.nodeType==1) sum+=countlines(e); 	
+    });
+	return sum; 
+}
+
+function positionNewWindow(window,parent)
+{
+    var w=$(window).width();
+    var h=$(window).height();    
+    
+    var windows=new Array();
+    var allwindows = $('.inv_window, .inv_annwindow');
+    allwindows.each(function(){
+        var objs = {};
+        objs["l"] = parseInt($(this).css('left'),10);
+        objs["t"] = parseInt($(this).css('top'),10);
+        objs["r"] = $(this).width()+objs["l"];
+        objs["b"] = $(this).height()+objs["t"];
+        windows.push(objs);
+    });
+    var resx=parseInt($(parent).css('left'),10)+$(parent).width()+100;
+    var resy=parseInt($(parent).css('top'),10);
+    
+    while(true)
+    {
+        var obstructor=null;
+        for(var i=0;i<windows.length;i++)
+        {
+            if(windows[i]["r"]>=resx && windows[i]["b"]>=resy &&
+                windows[i]["l"]<=resx+w && windows[i]["t"]<=resy+h)
+            {
+               obstructor=windows[i];
+               break;
+            } 
+        };
+        if(obstructor==null) break;
+        resy=obstructor["b"]+10;
+        if(resy>parseInt($(parent).css('top'),10)+400) 
+        {
+            resy=parseInt($(parent).css('top'),10);
+            resx+=20;
+        }
+    }
+    
+    $(window).css('left',resx);
+    $(window).css('top',resy);
+}
+
+function positionContextMenu(elem,top,yoffset){
+	var x=($(elem).offset().left-$('#invwrapper').offset().left+$('#invwrapper').scrollLeft())/zoom;
+	var y=($(elem).offset().top-$('#invwrapper').offset().top+$('#invwrapper').scrollTop())/zoom+$(elem).height();
+    if(yoffset != null) y+=yoffset;
+	var ytop=($(elem).offset().top-$('#invwrapper').offset().top+$('#invwrapper').scrollTop())/zoom;
+    if(yoffset != null) ytop+=yoffset;
+	$(obj('contextmenu')).css('left',x);
+    if(top)
+        $(obj('contextmenu')).css('top',ytop);
+	else if(y+$(obj('contextmenu')).height()>window.innerHeight)
+		$(obj('contextmenu')).css('top',ytop-$(obj('contextmenu')).height());
+	else
+		$(obj('contextmenu')).css('top',y);
+	if(showcontext) 
+		$(obj('contextmenu')).css('display','inline'); 
+	else 
+    {
+        $(obj('contextmenu')).css('display','none'); 
+		showcontext=true;
+    }
+}
+
+
+function setDragResize(window,div,resizable)
+{
+    $(window).mousedown(function(e){
+        if(e.which!=1) return;
+        if(e.shiftKey) 
+        {
+            if($(this).hasClass('dragselected'))
+                $(this).removeClass('dragselected');
+            else
+                $(this).addClass('dragselected');
+        }
+        $(obj('contextmenu')).css('display','none');
+        noclick=true;
+    });
+
+    $(window).dblclick(function(e){
+        
+        $('#invwrapper').scrollLeft(0);
+        $('#invwrapper').scrollTop(0);
+        var xpos=$(this).offset().left-$('#invwrapper').offset().left;
+        var ypos=$(this).offset().top-$('#invwrapper').offset().top;
+        $('#invwrapper').scrollLeft(xpos-200);
+        $('#invwrapper').scrollTop(ypos-200);
+        return false;
+    });
+    
+    
+    $(window).draggable({
+        handle: ".drg",
+        start:  function(event, ui){
+            selecteds=new Array();
+            var selectedObjs = $('div.dragselected');
+            selectedObjs.each(function(){
+                var objs = {};
+                objs["el"] = $(this);
+                objs["ox"] = parseInt($(this).css('left'),10)-parseInt($(window).css('left'),10);
+                objs["oy"] = parseInt($(this).css('top'),10)-parseInt($(window).css('top'),10);
+                selecteds.push(objs);
+                if($(this).attr('name')!=undefined)
+                {
+                    el=obj('ann'+$(this).attr('name'));
+                    var objs = {};
+                    objs["el"] = $(el);
+                    objs["ox"] = parseInt($(el).css('left'),10)-parseInt($(window).css('left'),10);
+                    objs["oy"] = parseInt($(el).css('top'),10)-parseInt($(window).css('top'),10);
+                    selecteds.push(objs);
+                }
+            });
+            if($(window).attr('name')!=undefined)
+            {
+                el=obj('ann'+$(window).attr('name'));
+                var objs = {};
+                objs["el"] = $(el);
+                objs["ox"] = parseInt($(el).css('left'),10)-parseInt($(window).css('left'),10);
+                objs["oy"] = parseInt($(el).css('top'),10)-parseInt($(window).css('top'),10);
+                selecteds.push(objs);
+            }
+            $(window).hide();
+            d=document.createElement('div');
+            $(d).attr('class',$(window).attr('class'));
+            $(d).appendTo($(obj('mainwrapper')));
+            $(d).html($(window).html());
+            $(d).css('left',parseInt($(window).css('left'),10));
+            $(d).css('top',parseInt($(window).css('top'),10));
+            $(d).css('width',$(window).css('width'));
+            $(d).css('height',$(window).css('height'));
+        },
+        drag: function(event, ui){
+            $(d).css('left',parseInt($(window).css('left'),10)/zoom);
+            $(d).css('top',parseInt($(window).css('top'),10)/zoom);
+            
+            for (var i=0;i<selecteds.length;i++)
+            {
+                selecteds[i]["el"].css('left', parseInt($(d).css('left'),10)+selecteds[i]["ox"]);
+                selecteds[i]["el"].css('top', parseInt($(d).css('top'),10)+selecteds[i]["oy"]);
+            }
+        },
+        stop: function(event, ui){
+            var px=parseInt($(window).css('left'),10);
+            var py=parseInt($(window).css('top'),10); 
+            $(window).show();
+            $(window).css('left',px/zoom);
+            $(window).css('top',py/zoom);
+            $(d).remove();
+            $(obj('mainwrapper')).css('-moz-transform', 'scale(1)');
+            $(obj('mainwrapper')).css('-webkit-transform', 'scale(1)');
+            if(selecteds.length==0)
+                {try{jsPlumb.repaint($(window));} catch(ex){};}
+            else
+                {jsPlumb.repaintEverything();}
+            $(obj('mainwrapper')).css('-moz-transform', 'scale('+zoom+')');
+            $(obj('mainwrapper')).css('-webkit-transform', 'scale('+zoom+')');
+        },
+        });
+        if(resizable)
+        $(window).resizable({
+        start:  function(event, ui){
+            sx=$('#invwrapper').scrollLeft();
+            sy=$('#invwrapper').scrollTop();
+            $(div).scrollTop(0);
+            $(window).hide();
+            dr=document.createElement('div');
+            $(dr).addClass('inv_window_dummy');
+            $(dr).html($(div).html());
+            $(dr).appendTo($(obj('mainwrapper')));
+            $(dr).css('left',parseInt($(window).css('left'),10));
+            $(dr).css('top',parseInt($(window).css('top'),10));
+            $(dr).css('width',parseInt($(window).css('width'),10));
+            $(dr).css('height',parseInt($(window).css('height'),10));
+        },
+        resize: function(event, ui){ 
+            $(dr).css('left',(parseInt($(window).css('left'),10)+sx)/zoom);
+            $(dr).css('top',(parseInt($(window).css('top'),10)+sy)/zoom);
+            $(dr).css('width',parseInt($(window).css('width'),10));
+            $(dr).css('height',parseInt($(window).css('height'),10));
+            $(div).width(ui.size.width-20);
+            $(div).height(ui.size.height-24);
+            $(div).css('max-height',ui.size.height);
+        },
+        stop:  function(event, ui){
+            var px=parseInt($(window).css('left'),10);
+            var py=parseInt($(window).css('top'),10);
+            $(window).show();
+            $(window).css('left',(px+sx)/zoom);
+            $(window).css('top',(py+sy)/zoom);
+            $(div).width(ui.size.width-20);
+            $(div).height(ui.size.height-24);
+            $(div).css('max-height',ui.size.height);
+            $(dr).remove();
+            $(obj('mainwrapper')).css('-moz-transform', 'scale(1)');
+            $(obj('mainwrapper')).css('-webkit-transform', 'scale(1)');
+            try{jsPlumb.repaint($(window))} catch(ex){};
+            $(obj('mainwrapper')).css('-moz-transform', 'scale('+zoom+')');
+            $(obj('mainwrapper')).css('-webkit-transform', 'scale('+zoom+')');
+        },
+        });
+}
+
+function repaintEverything()
+{
+    $(obj('mainwrapper')).css('-moz-transform', 'scale(1)');
+    $(obj('mainwrapper')).css('-webkit-transform', 'scale(1)');
+    jsPlumb.repaintEverything();
+    $(obj('mainwrapper')).css('-moz-transform', 'scale('+zoom+')');
+    $(obj('mainwrapper')).css('-webkit-transform', 'scale('+zoom+')');    
+}
+
+$(document).ready( function() {
+	 /*$('#file_browser').fileTree({
+	        root: '__multi_dirs__',
+	        script: 'ajax_handler?mod=invs',
+	        expandSpeed: 500,
+	        collapseSpeed: 500
+	    },function(file){
+                $.post("ajax_handler", { selected_file: file} );
+                $(obj('load_file_button')).click();
+		    });*/
+
+$('.head').live('click',function(){
+    showHideDataRow($(this));
+});
+
+$('#invwrapper .mylink').live('mouseenter',function(){
+	if($(this).hasClass("selectednode") && 
+       $(obj('contextmenu')).css('display')=='none') 
+	{		
+		positionContextMenu(this);
+	}
+});
+
+noclick=false;
+mousezoomy=null;
+mousesx=null;
+mousesy=null;
+czoom=1;
+zoom=1;
+
+$('#invwrapper').dblclick(function(e) {
+  czoom=1;zoom=1;
+  $(obj('mainwrapper')).css('-moz-transform', 'scale(1)');
+  $(obj('mainwrapper')).css('-webkit-transform', 'scale(1)');
+});
+
+$('#invwrapper').mousedown(function(e) {
+    if(e.which!=1) return;
+    if(noclick) {noclick=false;return true;}
+    if(e.pageX>$(this).offset().left+this.clientWidth || 
+        e.pageY>$(this).offset().top+this.clientHeight) return true;
+    if($(obj('contextmenu')).css('display')!='none') return true;
+    mousesx=e.pageX;
+    mousesy=e.pageY;
+    if(selectd!=null) $(selectd).remove();
+    selectd=document.createElement('div');
+    $(selectd).addClass('inv_selecter');
+    $(selectd).appendTo($('#container'));
+    $(selectd).css('left',mousesx);
+    $(selectd).css('top',mousesy);
+    $(selectd).css('width',0);
+    $(selectd).css('height',0);
+    $(selectd).mousemove(mousemovedragfunc);
+    $(selectd).mouseup(mouseupdragfunc);
+    //$(obj('contextmenu')).css('display','none');
+    var windows = $('div.inv_window, div.inv_annwindow');
+    windows.each(function(){ $(this).removeClass('dragselected');});
+    if(e.ctrlKey) mousezoomy=e.pageY;
+});
+
+mousemovedragfunc=function(e) {
+    if(mousesx!=null)
+    {
+        if(e.pageX<mousesx)
+        {
+            $(selectd).css('width',mousesx-e.pageX);
+            $(selectd).css('left',e.pageX);
+        } else $(selectd).css('width',e.pageX-mousesx);
+        if(e.pageY<mousesy)
+        {
+            $(selectd).css('height',mousesy-e.pageY);
+            $(selectd).css('top',e.pageY);
+        } else $(selectd).css('height',e.pageY-mousesy);
+    }
+    if(mousezoomy!=null)
+    {
+        zoom=czoom+(mousezoomy-e.pageY)/60;
+        if(zoom<0.1) zoom=0.1;
+        if(zoom>1.5) zoom=1.5;
+        $(obj('mainwrapper')).css('-moz-transform-origin','0% 0%');
+        $(obj('mainwrapper')).css('-moz-transform', 'scale('+zoom+')');
+        $(obj('mainwrapper')).css('-webkit-transform-origin','0% 0%');
+        $(obj('mainwrapper')).css('-webkit-transform', 'scale('+zoom+')');
+    }
+    var sel = window.getSelection();
+    sel.removeAllRanges();
+};
+
+
+mouseupdragfunc=function(e) {
+    if(mousesx!=null)
+    {
+        var windows = $('div.inv_window, div.inv_annwindow');
+        windows.each(function(){
+            if($(this).offset().left+$(this).width()>$(selectd).offset().left &&
+            $(this).offset().top+$(this).height()>$(selectd).offset().top &&
+            $(this).offset().left<$(selectd).offset().left+$(selectd).width() &&
+            $(this).offset().top<$(selectd).offset().top+$(selectd).height()) 
+            $(this).addClass('dragselected');
+        });
+        mousesx=null;
+        mousesy=null;
+        $(selectd).remove();
+        selectd=null;
+        var sel = window.getSelection();
+        sel.removeAllRanges();
+    }
+    czoom=zoom;
+    mousezoomy=null;
+};
+
+$('#invwrapper').mousemove(mousemovedragfunc);
+$('#invwrapper').mouseup(mouseupdragfunc);
+
+selectd=null;
+lastcolored=null;
+lastcoloredresult=null;
+selectednode=null;
+cb=obj('hiddenbutton');
+cd=obj('hiddendata');
+showcontext=true;
+
+$("#inv_tabs").tabs();
+$('#inv_tabs').tabs('select', 0);
+$(obj('contextmenu')).css('display','none');
+})
+
+jsPlumb.ready(function() {
+jsPlumb.Defaults.Container = $(obj("mainwrapper")).id;
+
+jsPlumb.importDefaults({
+	Endpoint: "Blank",
+	PaintStyle: { lineWidth:3,strokeStyle:'rgb(0,0,0)' },
+	Connector: "Flowchart"});
+});
+
+</script>
+</body>
+</html>

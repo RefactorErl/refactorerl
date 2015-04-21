@@ -1,0 +1,165 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>CodeBrowserWidget</class>
+ <widget class="QWidget" name="CodeBrowserWidget">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>607</width>
+    <height>500</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>Form</string>
+  </property>
+  <layout class="QVBoxLayout" name="verticalLayout_2">
+   <item>
+    <layout class="QVBoxLayout" name="mainLayout">
+     <item>
+      <layout class="QHBoxLayout" name="horizontalLayout_3">
+       <item>
+        <widget class="QLabel" name="label">
+         <property name="text">
+          <string>Run query from position </string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QLabel" name="positionLabel">
+         <property name="text">
+          <string/>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QLineEdit" name="queryEdit">
+         <property name="toolTip">
+          <string>Type semantic query here</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QPushButton" name="runButton">
+         <property name="toolTip">
+          <string>Run semantic query from the given position</string>
+         </property>
+         <property name="text">
+          <string>Run Query</string>
+         </property>
+        </widget>
+       </item>
+      </layout>
+     </item>
+     <item>
+      <layout class="QHBoxLayout" name="horizontalLayout_2">
+       <item>
+        <widget class="QLabel" name="predefLabel">
+         <property name="text">
+          <string>Predefined queries</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QComboBox" name="predefQueriesComboBox">
+         <property name="toolTip">
+          <string>Choose a predefined query and run it with the &quot;Run Query button&quot;</string>
+         </property>
+        </widget>
+       </item>
+      </layout>
+     </item>
+     <item>
+      <layout class="QHBoxLayout" name="horizontalLayout">
+       <item>
+        <widget class="QPushButton" name="previousButton">
+         <property name="toolTip">
+          <string>Search for previous occasion of the text</string>
+         </property>
+         <property name="text">
+          <string>Previous</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QPushButton" name="nextButton">
+         <property name="toolTip">
+          <string>Search for the next occasion of the text</string>
+         </property>
+         <property name="text">
+          <string>Next</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QLineEdit" name="findEdit">
+         <property name="toolTip">
+          <string>Type text here to search in the file</string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QPushButton" name="hideButton">
+         <property name="toolTip">
+          <string>Hide search area</string>
+         </property>
+         <property name="text">
+          <string>Hide</string>
+         </property>
+        </widget>
+       </item>
+      </layout>
+     </item>
+     <item>
+      <layout class="QHBoxLayout" name="horizontalLayout_5">
+       <item>
+        <widget class="QLabel" name="selectionLabel">
+         <property name="sizePolicy">
+          <sizepolicy hsizetype="Fixed" vsizetype="Preferred">
+           <horstretch>0</horstretch>
+           <verstretch>0</verstretch>
+          </sizepolicy>
+         </property>
+         <property name="text">
+          <string>Selection: </string>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QLabel" name="selectionRangeLabel">
+         <property name="sizePolicy">
+          <sizepolicy hsizetype="Preferred" vsizetype="Preferred">
+           <horstretch>0</horstretch>
+           <verstretch>0</verstretch>
+          </sizepolicy>
+         </property>
+         <property name="text">
+          <string/>
+         </property>
+        </widget>
+       </item>
+       <item>
+        <widget class="QComboBox" name="algorithmCombo"/>
+       </item>
+       <item>
+        <widget class="QPushButton" name="runDupcodeButton">
+         <property name="toolTip">
+          <string>Run the selected duplicated code analysis algorithm on the selected text</string>
+         </property>
+         <property name="statusTip">
+          <string notr="true"/>
+         </property>
+         <property name="text">
+          <string>Run duplicated code analysis</string>
+         </property>
+        </widget>
+       </item>
+      </layout>
+     </item>
+    </layout>
+   </item>
+  </layout>
+ </widget>
+ <resources/>
+ <connections/>
+</ui>

@@ -1,0 +1,140 @@
+<div class="database">
+
+	<div class="layout-side-onebox" re-resizable="{persist: 'side'}"><div class="inner1"><div class="inner2">
+        <div class="box">
+			<h2>
+				<span ng-show="isDatabase">Database browser</span>
+				<span ng-show="!isDatabase">File system browser</span>
+				<button type="button" class="btn btn-default" ng-show="!isDatabase" ng-click="toDatabase()">See database</button>
+				<button type="button" class="btn btn-default" ng-show="isDatabase" ng-click="toFileSystem()">See filesystem</button>
+			</h2>
+			<div class="content">
+				<div class="buttons" ui-if="false"><!-- disabled now as we have the (smarter) context menu -->
+					<button
+							ng-show="!isDatabase"
+							ng-disabled="!selected"
+							ng-class="{disabled: !selected}"
+							ng-click="add(selected)"
+							class="hint--bottom"
+							data-hint="Add {{selectedType()}} to database">
+						Add</button>
+					<button
+							ng-show="isDatabase"
+							ng-disabled="!selected"
+							ng-class="{disabled: !selected}"
+							ng-click="remove(selected)"
+							class="hint--bottom"
+							data-hint="Remove {{selectedType()}} from database">
+						Remove</button>
+					<button
+							ng-show="isDatabase"
+							ng-disabled="!selected"
+							ng-class="{disabled: !selected}"
+							ng-click="update(selected)"
+							class="hint--bottom"
+							data-hint="Reload {{selectedType()}} in database">
+						Update</button>
+				</div>
+
+				<label ng-show="!isDatabase" for="onlyErlang">
+					<input ng-show="!isDatabase" id="onlyErlang" type="checkbox" ng-model="options.onlyErlang" />
+					<span ng-show="!isDatabase">Show only erlang source files</span>
+				</label>
+
+				<label ng-show="!isDatabase" for="showHidden">
+					<input ng-show="!isDatabase" id="showHidden" type="checkbox" ng-model="options.showHidden" />
+					<span ng-show="!isDatabase">Show hidden files and directories</span>
+				</label>
+
+				<div class="field">
+					<input type="text" ng-model="options.filter" placeholder="Filename filter" />
+					<i ng-show="options.filter" class="icon-cancel" ng-click="options.filter = ''"></i>
+				</div>
+
+				<div ui-if="!tree.length" class="message">
+					<p ui-if="tree.loading">
+						Loading...
+					</p>
+					<p ui-if="!tree.loading">
+						<span ng-show="isDatabase">Database is empty</span>
+						<span ng-show="!isDatabase">Empty directory</span>
+					</p>
+				</div>
+
+				<ul re-recursive="tree as data" re-context-menu="contextMenuForNode(data)" re-context-menu-class="database-context-menu">
+					<li
+						ng-repeat="item in data | filter:fsFilter"
+						ng-class="{openable: item.folder, open: item.open, loading: item.children.loading}"
+						class="ext-{{item.ext}}">
+							<span class="before" ng-click="toggleOpen(item)">
+								<i ui-if="item.folder"></i>
+							</span>
+							<p
+								class="re-label"
+								ng-click="click(item)"
+								ng-bind-html-unsafe="item.name | highlight:regexpFilter"
+								re-context-menu-data="item"
+								title="{{item.path}}"></p>
+							<ul re-recursion="item.children"></ul>
+					</li>
+				</ul>
+			</div>
+		</div>
+
+		<div class="box box-38percent">
+			<h2>
+				<span>Function quicklist</span>
+        <button type="button" class="btn btn-default" ng-click="regenerate()">Reload</button>
+			</h2>
+			<div class="content">
+                <ul>
+                    <li ng-repeat="item in funlist">
+                        <a ng-show="isPositioned(item)"
+                           ng-href="href(item)"
+                           ng-click="open($event, item)"
+                           ng-class="{current: isCurrent(item)}">
+                            {{item.text}}
+                        </a>
+                        <span ng-show="!isPositioned(item)">
+                            {{item.text}}
+                        </span>
+                    </li>
+                </ul>
+			</div>
+		</div>
+	</div></div></div>
+
+	<div class="layout-cell main" ng-show="fileContent"><div class="inner1"><div class="inner2">
+		<span class="filepath hint--bottom" data-hint="{{file}}">
+			{{file}}
+		</span>
+		<div class="border" ng-click="removeHighlighting()">
+			<textarea
+                re-highlight="highlight"
+                re-code-mirror="codeMirrorConfig"
+				re-code-mirror-context-menu
+				re-code-mirror-copy="true"
+				re-code-mirror-select-all="true"
+				re-context-menu="contextMenuFor(file, selection)"
+				re-context-menu-class="database-context-menu"
+				placeholder=" "
+                re-code-mirror-dblclick="defaultForDoubleClick(file, index)"
+				ng-model="fileContent"></textarea>
+		</div>
+	</div></div></div>
+
+	<div class="layout-cell home" ng-hide="file"><div class="inner1"><div class="inner2">
+		<div class="border">
+			<textarea
+                re-code-mirror="codeMirrorConfig"
+				re-code-mirror-context-menu
+				re-code-mirror-copy="true"
+				re-code-mirror-select-all="true"
+				re-context-menu="contextMenuFor(file, selection)"
+				re-context-menu-class="database-context-menu"
+				placeholder=" "
+				ng-model="fileContent"></textarea>
+		</div>
+	</div></div></div>
+
+</div>

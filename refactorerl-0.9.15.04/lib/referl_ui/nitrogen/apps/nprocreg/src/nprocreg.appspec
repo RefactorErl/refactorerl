@@ -1,0 +1,7 @@
+% This is an -*- Erlang -*- application specification file.
+{description, "NProcReg - Simple Erlang Process Registry."}.
+{vsn, "0.1"}.
+{modSrc, ["*.erl"]}.
+{applications, [kernel,stdlib]}.
+{registered, []}.
+{mod, {nprocreg_app, []}}.

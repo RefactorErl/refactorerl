@@ -1,0 +1,269 @@
+.queries {
+
+	.layout-side  {
+    /* New code!!! */
+		h2 {
+			> span {
+				vertical-align: top;
+				padding-right: 3px;
+			}
+			> button {
+				position: relative;
+				top: -4px;
+			}
+		}
+
+		ul {
+			@extend %file-browser;
+			.ui-match {
+				font-weight: bold;
+			}
+		}
+
+		label {
+			display: block;
+			font-size: 12px;
+			margin: 6px 0 4px 0;
+			* {
+				vertical-align: middle;
+			}
+		}
+
+		.field {
+			margin-bottom: 10px;
+			position: relative;
+
+			input[type=text] {
+				@extend %input;
+				width: 100%;
+			}
+
+			i {
+				position: absolute;
+				right: 0;
+				top: 0;
+				padding: 9px 8px 7px;
+				font-size: 10px;
+				color: #aaa;
+				cursor: pointer;
+
+				&:hover {
+					color: #888;
+				}
+			}
+		}
+
+    button {
+      height: 25px;
+      padding: 3px 7px;
+      font-size: 12px;
+      float: right;
+		}
+
+    .buttons-file-viewer {
+			margin: 10px 0 10px;
+		}
+    /* End of new code */
+
+		color: #333;
+
+		.btn-group {
+			margin-bottom: 8px;
+
+			button {
+        height: 25px;
+        padding: 3px 7px;
+        font-size: 12px;
+        float: left;
+
+			}
+		}
+
+		.pager-buttons {
+			float: right;
+      padding-right: 15px;
+		}
+
+		.error {
+			strong {
+				font-size: 14px;
+				padding: 2px 4px;
+				color: #fff;
+				background: $error-color;
+				margin: 0 0 5px -4px;
+				float: left;
+				@include border-radius(2px);
+			}
+			p {
+				clear: both;
+				color: $error-color;
+			}
+		}
+
+		.type-table {
+			width: 100%;
+			th {
+				text-align: left;
+				padding: 0 2px;
+			}
+			tbody:hover {
+				background: #f0f0f0;
+			}
+			td {
+				word-wrap: break-word;
+				word-break: break-all;
+				vertical-align: top;
+				padding: 0 2px;
+			}
+            .list-filename-header {
+                border-top: 5px solid white;
+                background: #ebebeb;
+            }
+            .list-content {
+                border-bottom: 5px solid white;
+
+                a {
+                    text-decoration:none;
+                }
+                span {
+                    max-height: 3rem;
+                    display: block;
+                    overflow: hidden;
+                }
+            }
+            .current {
+		        color: #fff;
+		        background: $selection !important;
+	        }
+		}
+
+		.type-grouped {
+			@extend %tree;
+			margin-left: -4px;
+			.header {
+				font-weight: bold;
+			}
+            .item-label {
+                padding: 3px;
+                text-decoration:none;
+            }
+            .list-filename-header {
+                background: #DDD;
+            }
+		}
+
+        .list-filename-header {
+            color: black;
+        }
+
+        .list-filename-content {
+			@include ellipsis;
+            white-space: initial;
+            max-height: 3.7em;
+            max-height: 3rem;
+            font-family: "Consolas", "Courier New";
+        }
+
+		.type-list {
+			li {
+				margin-left: 2px;
+				@include ellipsis;
+
+				.before {
+                    height: 18px;
+                    width: 18px;
+					vertical-align: middle;
+					font-size: 5px;
+				}
+			}
+            .item-label {
+                padding: 3px;
+                text-decoration:none;
+            }
+            .list-filename-header {
+                background: #DDD;
+            }
+		}
+
+		.type-chains {
+			margin-left: 0px;
+			li {
+        border: 1px solid #ccd;
+        padding: 1px;
+        margin: 0 2px 10px 5px;
+        background: #fefefe;
+
+        a {
+          text-decoration: none;
+          display: block;
+        }
+
+        .list-filename-header {
+          background: #eee;
+        }
+
+        .list-filename-content {
+        }
+
+        .indented {
+          margin-left: 16px;
+        }
+        .before {
+          background: url(../img/arrow.png) 0 50% no-repeat;
+        }
+        .current {
+          color: #fff;
+          background: $selection !important;
+        }
+      }
+		}
+
+	}
+
+	.border {
+		background: #fff;
+		border: 1px solid #bbb;
+		height: 100%;
+		@include box-sizing(border-box);
+	}
+
+	.main {
+
+		.inner2 {
+			padding: 34px 10px 10px 0;
+		}
+
+		.filepath {
+			display: inline-block;
+			position: absolute;
+			top: 12px;
+			left: 3px;
+			height: 23px;
+			padding: 3px 6px;
+			border: 1px solid #bbb;
+			background: #fff;
+			font-size: 13px;
+			color: #444;
+			@include border-radius(3px 3px 0 0);
+			@include box-shadow(rgba(#000, 0.25) 0 0 2px);
+		}
+
+		.CodeMirror {
+			@extend %source-viewer;
+		}
+
+		.CodeMirror-empty .CodeMirror-gutters {
+			visibility: hidden;
+		}
+
+		.highlight {
+			background: lighten(#f6f666, 10);
+		}
+
+	}
+
+}
+
+.queries-context-menu {
+	@extend %context-menu-defaults;
+}

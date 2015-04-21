@@ -1,0 +1,74 @@
+.navbar {
+  min-height: 27px;
+	background: #3a3a3a;
+
+  // Reset bootstrap defaults
+  border: 0;
+  border-radius: 0;
+
+	border-bottom: 1px solid #1a1a1a;
+  margin-bottom: 0px;
+
+	color: #ccc;
+  font-size: 12px;
+
+  // Overwrite bootstrap values
+  .nav             { height: 27px; }
+  .container-fluid { padding-left: 0; }
+
+  li {
+		> a, > span {
+      padding: 6px 12px;
+      display: block;
+      height: 27px;
+		}
+
+		a {
+			color: rgba(#fff, 0.4);
+			font-weight: bold;
+			text-transform: uppercase;
+			text-decoration: none;
+			outline: 0;
+			@include text-shadow(rgba(#000, 0.4) 1px 1px 2px);
+			@include transition(background 0.3s, color 0.3s);
+
+			span {
+				padding: 1px 4px;
+				border: 1px solid transparent;
+				background: rgba(#000, 0.15);
+				background: rgba(#cfcfcf, 0.15);
+				position: relative;
+				left: 3px;
+				font-size: 0;
+				@include opacity(0);
+				@include text-shadow(none);
+				@include border-radius(3px);
+				@include transition(font-size 0.3s, opacity 0.3s);
+			}
+
+			&.can-have-indicator {
+				padding-right: 0;
+			}
+			&.has-indicator {
+				padding-right: 12px;
+
+				span {
+					font-size: inherit;
+					@include opacity(1);
+				}
+			}
+		}
+
+		a.active, a:hover {
+			background: rgba(#000, 0.2) !important;
+		}
+
+		a:hover {
+			color: rgba(#fff, 0.6) !important;
+		}
+
+		a.active, a:focus {
+			color: #fff !important;
+		}
+	}
+}

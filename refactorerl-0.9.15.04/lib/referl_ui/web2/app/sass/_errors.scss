@@ -1,0 +1,51 @@
+.errors {
+
+	.main .inner2 {
+		padding: 10px;
+		overflow: hidden;
+	}
+
+	.border {
+		background: #fff;
+		border: 1px solid #bbb;
+		overflow: auto;
+		height: 100%;
+		padding: 10px;
+		@include box-sizing(border-box);
+	}
+
+	h2 {
+		font-size: 16px;
+		color: #444;
+		font-weight: bold;
+	}
+
+	p {
+		margin: 10px 0;
+		font-size: 12px;
+		color: #333;
+	}
+
+	ul {
+		padding: 5px 0;
+	}
+	li {
+		margin: 0 30px;
+	}
+	a {
+		color: $primary-color;
+		outline: 0;
+		@extend %smart-underline;
+	}
+
+	.CodeMirror {
+		@extend %source-viewer;
+		height: 0;
+		margin: 5px;
+		border: 1px solid rgba(#000, 0.25);
+	}
+
+	.highlight {
+		background: #f66;
+	}
+}

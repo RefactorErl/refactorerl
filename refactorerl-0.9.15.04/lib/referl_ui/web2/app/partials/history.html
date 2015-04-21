@@ -1,0 +1,131 @@
+<div class="inner1"><div class="inner2">
+
+	<div class="border">
+
+		<h2>History</h2>
+
+		<p ng-show="data.loading">
+			Loading...
+		</p>
+
+        <table class="table" ui-if="!data.loading && historyType=='duplicates'">
+            <tr>
+                <td class="shrink"><h2>Search previous analysis by name:</h2></td>
+                <td class="center">
+                    <input
+                        type="hidden"
+                        ng-model="searchName"
+                        placeholder="Type the name of the analysis",
+                        ui-select2="extend(searchNameConfig, {
+                            containerCssClass: 'duplicates-select-container',
+                            dropdownCssClass:  'duplicates-select-dropdown'
+                        })" />
+                </td>
+                <td class="shrink">
+                    <button class="btn btn-primary" ng-click="getResultByName(searchName)">Show results</button>
+                </td>
+            </tr>
+        </table>
+
+		<p ng-show="!data.loading &amp;&amp; !data.items.length">
+			No history entry yet.
+		</p>
+
+    <table
+        class="table table-responsive table-striped table-condensed table-hover"
+        ng-show="data.items.length"
+        cellspacing="0"
+        cellpadding="0"
+        border="0">
+    	<thead>
+    		<tr>
+    			<th class="title">&nbsp;</th>
+    			<th ng-hide="1" class="owner">Owner</th>
+    			<th class="launched">Launched</th>
+    			<th class="finished">Finished</th>
+          <th class="type">Type</th>
+    			<th class="commands">&nbsp;</th>
+    		</tr>
+    	</thead>
+    	<tbody>
+		    <tr
+                ng-repeat="item in data.items"
+                ng-class-odd="'odd'"
+                ng-class="{current: item.id === currentId}"
+                ng-click="click(item)"
+                re-follow-element="{{item.id}}">
+                <td><a ng-href="{{href(item)}}">{{item.title}}</a></td>
+                <td ng-hide="1">{{item.owner}}</td>
+                <td>{{item.launchedDate}}</td>
+                <td>{{item.finishedDate}}</td>
+                <td>{{item.type}}</td>
+    			<td class="commands">
+    				<button type="button" class="btn btn-default" ng-href="" ng-show="item.running && item.canBeDeleted" ng-click="remove(item)">cancel</button>
+    				<button type="button" class="btn btn-default" ng-href="" ng-hide="item.running || !item.canBeDeleted" ng-click="remove(item)">delete</button>
+                    <span ng-show="item.dbchanged" class="glyphicon glyphicon-warning-sign icon" title="Database has changed"></span>
+    			</td>
+    		</tr>
+    	</tbody>
+    </table>
+
+    <div ui-if="data.items.length && historyType=='duplicates'">
+        <div
+            class="follow"
+            re-follow-cursor="cursorOverId"
+            ng-mouseleave="resetShownSelection()">
+            <table ng-show="itemParams(cursorOverId).forSelection">
+                <tr>
+                    <td colspan="2">Duplicates by selection</td>
+                </tr>
+                <tr ng-show="!shownSelection">
+                    <td>Algorithm:</td>
+                    <td>
+                        {{itemParams(cursorOverId).label}}
+                    </td>
+                </tr>
+                <tr ng-show="!shownSelection">
+                    <td>Saved with name:</td>
+                    <td>
+                        {{itemProp(cursorOverId, "name")}}
+                    </td>
+                </tr>
+                <tr ng-show="!shownSelection">
+                    <td>File:</td>
+                    <td><a href="{{historyHref(cursorOverId, 'file')}}" ng-click="showSelection(cursorOverId)">
+                        {{itemParams(cursorOverId).file}}</a>
+                    </td>
+                </tr>
+                <tr ng-show="!shownSelection">
+                    <td>Selection:</td>
+                    <td><a href="{{historyHref(cursorOverId, 'sel')}}" ng-click="showSelection(cursorOverId)">
+                        {{itemParams(cursorOverId)["from"]["line"]}},
+                        {{itemParams(cursorOverId)["from"]["ch"]}} -
+                        {{itemParams(cursorOverId)["to"]["line"]}},
+                        {{itemParams(cursorOverId)["to"]["ch"]}}</a>
+                    </td>
+                </tr>
+            </table>
+            <div ng-show="!!shownSelection" class="selection">{{shownSelection}}</div>
+            <table ng-show="!itemParams(cursorOverId).forSelection">
+                <tr ng-show="itemParams(cursorOverId).label">
+                    <td>Algorithm:</td>
+                    <td>{{itemParams(cursorOverId).label}}</td>
+                </tr>
+                <tr ng-show="itemParams(cursorOverId).name">
+                    <td>Name:</td>
+                    <td>{{itemParams(cursorOverId).name}}</td>
+                </tr>
+                <tr ng-repeat="param in itemParams(cursorOverId).args" ng-show="param.default || param.type!='atom'">
+                    <td>{{param.label}}: </td>
+                    <td ng-show="!(param.type=='atoms')">{{param.default}}</td>
+                    <td ng-show="(param.type=='atoms')">
+                        <span class="atomlist" ng-repeat="atom in param.selected">{{atom.text}}</span>
+                    </td>
+                </tr>
+            </table>
+        </div>
+    </div>
+
+	</div>
+
+</div></div>

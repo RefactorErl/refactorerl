@@ -1,0 +1,17 @@
+<div class="layout">
+
+	<div class="layout-north" ng-class="{full: auth.getUser()}">
+    <nav class="navbar navbar-default" role="navigation">
+      <div class="container-fluid" ng-include="'partials/navigation.html'"></div>
+    </nav>
+
+		<div class="top" ng-class="{simple: !auth.getUser()}" ng-controller="TopCtrl" ng-include="'partials/top.html'"></div>
+	</div>
+
+	<div class="layout-middle" ng-view></div>
+
+</div>
+
+<!--<div ng-controller="DatabaseStatusCtrl" ng-include="'partials/database-status.html'"></div>-->
+
+<div ng-controller="ModalsCtrl" ng-include="'partials/modals.html'"></div>

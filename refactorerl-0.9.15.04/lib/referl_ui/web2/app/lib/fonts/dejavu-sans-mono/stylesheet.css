@@ -1,0 +1,39 @@
+@font-face {
+    font-family: 'DejaVuSansMonoBook';
+    src: url('DejaVuSansMono-webfont.eot');
+    src: url('DejaVuSansMono-webfont.eot?#iefix') format('embedded-opentype'),
+         url('DejaVuSansMono-webfont.ttf') format('truetype');
+    font-weight: normal;
+    font-style: normal;
+
+}
+
+@font-face {
+    font-family: 'DejaVuSansMonoOblique';
+    src: url('DejaVuSansMono-Oblique-webfont.eot');
+    src: url('DejaVuSansMono-Oblique-webfont.eot?#iefix') format('embedded-opentype'),
+         url('DejaVuSansMono-Oblique-webfont.ttf') format('truetype');
+    font-weight: normal;
+    font-style: normal;
+
+}
+
+@font-face {
+    font-family: 'DejaVuSansMonoBold';
+    src: url('DejaVuSansMono-Bold-webfont.eot');
+    src: url('DejaVuSansMono-Bold-webfont.eot?#iefix') format('embedded-opentype'),
+         url('DejaVuSansMono-Bold-webfont.ttf') format('truetype');
+    font-weight: normal;
+    font-style: normal;
+
+}
+
+@font-face {
+    font-family: 'DejaVuSansMonoBoldOblique';
+    src: url('DejaVuSansMono-BoldOblique-webfont.eot');
+    src: url('DejaVuSansMono-BoldOblique-webfont.eot?#iefix') format('embedded-opentype'),
+         url('DejaVuSansMono-BoldOblique-webfont.ttf') format('truetype');
+    font-weight: normal;
+    font-style: normal;
+
+}

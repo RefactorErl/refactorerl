@@ -1,0 +1,52 @@
+%%% -*- coding: latin-1 -*-
+
+%%% This file is part of RefactorErl.
+%%%
+%%% RefactorErl is free software: you can redistribute it and/or modify
+%%% it under the terms of the GNU Lesser General Public License as published
+%%% by the Free Software Foundation, either version 3 of the License, or
+%%% (at your option) any later version.
+%%%
+%%% RefactorErl is distributed in the hope that it will be useful,
+%%% but WITHOUT ANY WARRANTY; without even the implied warranty of
+%%% MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+%%% GNU Lesser General Public License for more details.
+%%%
+%%% You should have received a copy of the GNU Lesser General Public License
+%%% along with RefactorErl.  If not, see <http://plc.inf.elte.hu/erlang/>.
+%%%
+%%% The Original Code is RefactorErl.
+%%%
+%%% The Initial Developer of the Original Code is Eötvös Loránd University.
+%%% Portions created  by Eötvös Loránd University and ELTE-Soft Ltd.
+%%% are Copyright 2007-2013 Eötvös Loránd University, ELTE-Soft Ltd.
+%%% and Ericsson Hungary. All Rights Reserved.
+
+-module(refcore_erl_scanner).
+-vsn("$Rev: 9568 $").
+
+-export([create/0, init/1]).
+
+-include("core.hrl").
+
+%% @spec create() -> //referl_gen/refgen_scanner:fold_scanner()
+%% @doc Erlang scanner factory function. The initial state of the returned
+%% scanner should be constructed using {@link init/1}.
+create() ->
+    ?Scanner:new([{table, table()},
+                  {callback, fun token/2}]).
+
+%% @spec init( (atom(), string(), {Start, End}) -> term() ) -> state()
+%%       Start = //referl_gen/refgen_scanner:pos()
+%%       End   = //referl_gen/refgen_scanner:pos()
+%% @doc Erlang scanner initial state. The state contains `Token', the token
+%% builder function. The scanner will return the list of tokens build using
+%% `Token'.
+init(Token) ->
+    {start(), Token, []}.
+
+token({eof, _, _}, {_, _, Lst}) ->
+    lists:reverse(Lst);
+token({Type, Text, LPos, SPos}, {St, T, Lst}) ->
+    RealType = keyword(St, Type, Text),
+    {next(St, RealType), T, [T(RealType, Text, LPos, SPos) | Lst]}.

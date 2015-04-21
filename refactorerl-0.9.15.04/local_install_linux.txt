@@ -1,0 +1,112 @@
+INSTALLATION INSTRUCTIONS FOR LINUX
+===================================
+
+You can install RefactorErl on a system where you have no admin
+right. Follow the instructions below.
+
+You need some packages installed by the admin, but they can be found
+in almost all Linux system. These are:
+ * gcc (>= 4.5)
+ * make
+ * tar
+ * bash
+ * m4
+ * ncurses
+ * libpam-dev (for yaws)
+ * openssl (for yaws)
+ * ncurses
+ * (optional) wx
+
+I will assume that you would like to install the tool into a local
+"root" directory. You should modify the next route to your one:
+E.g.: /home/olikas/local
+
+###
+export REFERL_ROOT=/path/to/localroot
+###
+
+The local "ghost" user will be 'referl' by default. Feel free to
+modify it.
+
+###
+export REFERL_GHOST_USER=referl
+###
+
+Run the next script to initialize the directory layout.
+
+###
+mkdir -p $REFERL_ROOT/home/$REFERL_GHOST_USER
+###
+
+To install Erlang
+
+###
+cd $REFERL_ROOT/home/$REFERL_GHOST_USER
+wget www.erlang.org/download/otp_src_17.5.tar.gz
+tar xvvf otp_src_17.5.tar.gz
+cd otp_src_17.5
+./configure --prefix=$REFERL_ROOT
+make
+make install
+cd ..
+rm otp_src_17.5.tar.gz
+###
+
+To install RefactorErl:
+
+###
+cd $REFERL_ROOT/home/$REFERL_GHOST_USER
+wget http://plc.inf.elte.hu/erlang/dl/refactorerl-0.9.15.04.tar.gz
+tar xvvf refactorerl-0.9.15.04.tar.gz
+cd refactorerl-0.9.15.04
+bin/referl -erl $REFERL_ROOT/bin/erl -build tool
+cd ..
+rm refactorerl-0.9.15.04.tar.gz
+###
+
+Now you can start the tool:
+
+###
+cd $REFERL_ROOT/home/$REFERL_GHOST_USER/refactorerl-0.9.15.04
+bin/referl -erl $REFERL_ROOT/bin/erl -db nif
+###
+
+If you would like to use the web based interface of the tool, 
+you have to install the version 1.90 or higher versions of Yaws. 
+The suggested version is 1.92.
+
+If the version 1.89 of Yaws is needed to be used, 
+then you should re-build the tool as described below:
+###
+cd $REFERL_ROOT/home/$REFERL_GHOST_USER
+cd refactorerl-0.9.15.04
+bin/referl -erl $REFERL_ROOT/bin/erl -build tool -yaws_189
+###
+
+If one of the higher version of Yaws is going to be used, you needn't do anything.
+
+To install Yaws:
+###
+cd $REFERL_ROOT/home/$REFERL_GHOST_USER
+wget http://yaws.hyber.org/download/yaws-1.92.tar.gz
+tar xvvf yaws-1.92.tar.gz
+cd yaws
+export ERL=$REFERL_ROOT/bin/erl
+export ERLC=$REFERL_ROOT/bin/erlc
+./configure --prefix=$REFERL_ROOT --localstatedir=$REFERL_ROOT/var --sysconfdir=$REFERL_ROOT/etc
+make
+make install
+cd ..
+rm yaws-1.92.tar.gz
+###
+
+To run the tool execute the following commands. Remember to substitute
+your path to 'yaws_path' part. Do not forget to change the path to yours.
+
+###
+cd $REFERL_ROOT/home/$REFERL_GHOST_USER/refactorerl-0.9.15.04
+bin/referl -erl $REFERL_ROOT/bin/erl -db nif
+###
+%%%
+ri:start_web2([{yaws_path, "/path/to/localroot/lib/yaws/ebin/"}]).
+%%%

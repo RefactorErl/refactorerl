@@ -1,0 +1,27 @@
+<p ng-show="queue &amp;&amp; !queue.items.length">
+	The queue is empty
+</p>
+<ul re-click-outside="closeQueue()">
+	<li ng-repeat="item in queue.items" ng-class="{running: item.running}" ng-click="goto(item)">
+		<div ng-show="!item.running" class="icon-ok-wrapper"><i class="icon-ok"></i></div>
+		<div ng-show="item.running" class="icon-spinner-wrapper"><i class="icon-spinner"></i></div>
+
+		<a ng-show="!item.running" class="command" ng-click="remove(item)">delete</a>
+		<a ng-show="item.running" class="command" ng-click="remove(item)">cancel</a>
+
+		<strong>{{item.title}}</strong>
+
+		<div ng-show="item.running">
+			<span ng-show="item.page == 'queries'">
+				Query
+			</span>
+			<span ng-hide="item.page == 'queries'">
+				Job
+			</span>
+			launched <span re-time-ago="item.launchedDate"></span>
+		</div>
+		<div ng-show="!item.running">
+			Finished job (<span re-time-ago="item.finishedDate"></span>)
+		</div>
+	</li>
+</ul>

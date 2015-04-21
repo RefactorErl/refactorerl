@@ -1,0 +1,48 @@
+.edit-skeleton .mask {
+	@extend %mask;
+}
+
+.edit-skeleton form {
+	h3 {
+		color: rgba(#000, 0.70);
+		font-weight: bold;
+		font-size: 20px;
+	}
+
+	label {
+		display: block;
+		margin: 10px 0 3px;
+		opacity: 0.7;
+	}
+
+	input {
+		font-family: $monospace-font;
+	}
+
+	input,
+	textarea,
+	.CodeMirror {
+		@extend %input;
+		width: 100%;
+	}
+
+	textarea {
+		min-height: 70px;
+		font-family: $default-font;
+		font-size: 12px;
+	}
+
+	.CodeMirror {
+		height: auto;
+		font-size: 13px;
+		padding: 2px 0;
+		font-family: $monospace-font;
+	}
+
+	.CodeMirror-selected,
+	.CodeMirror-selectedtext {
+		background: $source-viewer-selection;
+		color: #fff;
+	}
+
+}

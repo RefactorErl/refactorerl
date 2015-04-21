@@ -1,0 +1,41 @@
+@import "compass";
+@import "variables";
+@import "lib";
+
+body {
+	background:  $background;
+	font-family: $default-font;
+	font-size:   13px;
+}
+
+.hide {
+    display: none;
+}
+
+.warning {
+    font-weight: bold;
+}
+
+.wrap {
+    white-space: pre-line;
+    word-wrap: break-word;
+}
+
+@import "layout";
+
+/* Common elements */
+@import "navigation";
+@import "top";
+
+/* Controllers */
+@import "login";
+@import "queries";
+@import "database";
+@import "modals";
+@import "errors";
+@import "graphs";
+@import "duplicates";
+@import "queue";
+@import "edit-skeleton";
+@import "history";
+@import "auto-completion";

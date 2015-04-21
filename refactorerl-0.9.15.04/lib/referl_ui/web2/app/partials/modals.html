@@ -1,0 +1,81 @@
+<div id="main-modal" class="modal fade">
+  <div class="modal-dialog">
+    <div class="modal-content modals-content">
+      <div class="modal-header">
+        <button ng-show="closeable" type="button" class="close" data-dismiss="modal" aria-hidden="true">&times;</button>
+        <h4 class="modal-title" ng-show="content.title">{{content.title}}</h4>
+        <h4 class="modal-title" ng-show="content.type">
+			<!-- Operation -->
+			<span ng-show="content.type == 'add'">Adding</span>
+			<span ng-show="content.type == 'drop'">Removing</span>
+			<span ng-show="content.type == 'update'">Update</span>
+			<!-- Subject -->
+			<span ng-show="content.path">
+				<span ng-show="content.isFolder">folder</span>
+				<span ng-show="!content.isFolder">file</span>
+			</span>
+			<span ng-show="!content.path">
+				file(s)
+			</span>
+			<!-- Finish sentence -->
+			<span ng-show="content.type == 'add'">to</span>
+			<span ng-show="content.type == 'drop'">from</span>
+			<span ng-show="content.type == 'update'">in</span>
+			database
+		</h4>
+		<h4 class="modal-title" ng-show="!content.title && !content.type">Database modification is in progress</h4>
+      </div>
+
+	    <div class="modal-body">
+	      	<div ng-show="content.msg">{{content.msg}}</div>
+	      	<h4 ng-show="content.large">{{content.large}}</h4>
+
+			<dl ng-show="content.progress &amp;&amp; !content.done">
+				<dt>Current file</dt>
+				<dd>{{content.progress.file}}</dd>
+				<dt>Terms in file</dt>
+				<dd>{{content.progress.formCount}}/{{content.progress.formMax}}</dd>
+				<dt ng-show="content.progress.speed">Speed</dt>
+				<dd ng-show="content.progress.speed">{{content.progress.speed | number:2}} kB/s</dd>
+			</dl>
+
+			<p ng-show="content.done" class="done">
+				<span ng-show="!content.result.message">
+					Database modification is finished.
+				</span>
+				<span ng-show="content.result.message" class="warning">
+					{{content.result.message}}.
+				</span>
+			</p>
+
+			<div ng-show="!content.msg && !content.large" class="progress progress-striped active" ng-class="{active: !content.done}">
+				<div
+					class="bar"
+					ng-show="true"
+					ng-style="{width: percentValue()}">
+						{{percentDisplay()}}
+				</div>
+			</div>
+	    </div>
+
+	    <div class="modal-footer" ng-show="content.buttons.length || closeable || content.disableable">
+	    	<span class="left" ng-show="content.disableable">
+	    		<input type="checkbox" ng-model="settings.disabled"></input>
+	    		Don't show this message again
+	    	</span>
+	    	<span ng-repeat="button in content.buttons">
+	    		<button
+	    			type="button"
+	    			class="btn"
+	    			ng-class="{'btn-default': button.default, 'btn-primary': !button.default}"
+	    			ng-click="button.call()"
+	    			data-dismiss="modal">
+	    			{{button.text}}
+	    		</button>
+	    	</span>
+    		<button ng-show="!content.buttons && closeable" type="button" class="btn btn-default" data-dismiss="modal">OK</button>
+	    </div>
+
+    </div>
+  </div>
+</div>

@@ -1,0 +1,148 @@
+<div class="duplicates">
+
+	<div class="layout-side" re-resizable="{persist: 'side'}"><div class="inner1"><div class="inner2">
+		<div class="box">
+			<h2>Parameters</h2>
+			<div class="content">
+				<div class="field">
+					<label for="algorithm">Algorithm</label>
+					<select
+							id="algorithm"
+							ng-model="algorithm"
+							ui-select2="{
+								minimumResultsForSearch: 10,
+								containerCssClass: 'duplicates-select-container',
+								dropdownCssClass: 'duplicates-select-dropdown'}">
+						<option ng-repeat="alg in algorithms" value="{{alg.key}}">{{alg.label}}</option>
+					</select>
+				</div>
+
+				<div
+                    class="field oneline"
+                    ng-repeat="argument in findByKey(algorithms, algorithm).args">
+
+					<label for="{{argument.key}}">{{argument.label}}</label>
+					<input
+                        ng-show="argument.type == 'atom' || argument.type == 'integer' || argument.type == 'float'"
+                        ng-class="{number: (argument.type == 'integer' || argument.type == 'float')}"
+                        class="input-field"
+						type="text"
+						id="{{argument.key}}"
+						ng-model="findByKey(findByKey(algorithms, algorithm).args, argument.key).default" />
+
+                    <input
+                        ng-show="argument.type == 'boolean'"
+                        class="input-field"
+                        id="{{argument.key}}"
+                        type="checkbox"
+                        ng-model="findByKey(findByKey(algorithms, algorithm).args, argument.key).default" />
+
+					<div
+                        ng-show="argument.type == 'enum'">
+                        <select
+							id="{{argument.key}}"
+							ng-model="findByKey(findByKey(algorithms, algorithm).args, argument.key).default"
+							ui-select2="{
+								minimumResultsForSearch: 10,
+								containerCssClass: 'duplicates-select-container',
+								dropdownCssClass: 'duplicates-select-dropdown'}">
+						    <option ng-repeat="opt in argument.options" value="{{opt}}">{{opt}}</option>
+					    </select>
+                    </div>
+
+					<div
+                        ng-show="argument.type == 'atoms'">
+					    <input
+						    type="hidden"
+						    ng-model="findByKey(findByKey(algorithms, algorithm).args, argument.key).selected"
+						    placeholder="Type a module name",
+						    ui-select2="extend(subjectsConfig, {
+							    containerCssClass: 'duplicates-select-container',
+							    dropdownCssClass:  'duplicates-select-dropdown'
+						    })" />
+                    </div>
+				</div>
+
+				<p class="button">
+					<button type="button" class="btn btn-primary" ng-show="true" ng-click="generate()">Run analysis</button>
+					<button type="button" class="btn btn-primary" ng-show="!true">Send to queue</button>
+					<button type="button" class="btn btn-primary" ng-show="!true">Cancel</button>
+				</p>
+			</div>
+		</div>
+
+		<div class="box results" ui-if="results()">
+			<h2>Results
+                <button ng-click="download()" ng-show="results().output">Download output</button>
+            </h2>
+			<div class="content">
+				<p ng-show="!results().groups.length && !results().error">
+					No duplicated code found
+				</p>
+
+				<p ng-show="results().error" class="error">
+					<strong>Error</strong>
+					<p>{{results().error}}</p>
+				</p>
+
+				<ul>
+					<li ng-repeat="group in results().groups" ng-class="{selected: group == currentGroup}">
+						<a ng-href="#/duplicates?{{idHref()}}&amp;group={{$index}}">
+							Group #{{$index + 1}}
+							({{group.items.length}} occurrences)
+						</a>
+					</li>
+				</ul>
+			</div>
+		</div>
+
+		<div class="box results" ng-show="errors">
+			<h2>Input errors</h2>
+			<div class="content">
+				<div class="error" ng-repeat="error in errors">
+					<strong>Error</strong>
+					<div>{{error}}</div>
+				</div>
+			</div>
+		</div>
+
+	</div></div></div>
+
+	<div class="layout-cell history" ng-hide="waiting() || (currentGroup &amp;&amp; results())" ng-controller="HistoryCtrl" ng-include="'partials/history.html'"></div>
+
+	<div class="layout-cell main" ng-show="waiting()"><div class="inner1"><div class="inner2">
+		<div class="border">
+			<p>
+				Please wait for the results...
+			</p>
+		</div>
+	</div></div></div>
+
+	<div class="layout-cell main" ng-show="results() &amp;&amp; currentGroup" ng-repeat="panel in panels"><div class="inner1"><div class="inner2">
+		<div class="border">
+			<div class="duplicates-panel">
+				<input
+					ng-model="panel.item"
+					ui-select2="extend(itemsConfig, {
+						minimumResultsForSearch: 20,
+						containerCssClass: 'duplicates-select-container',
+						dropdownCssClass:  'duplicates-select-dropdown'})" />
+				<!--<button ui-if="$first" ng-click="showDiff()">Show differences</button>-->
+				<div>
+					<textarea
+						re-highlight="panel.item.highlight"
+						re-multi-highlight="panel.item.multiHighlight"
+						re-code-mirror="codeMirrorConfig"
+						re-code-mirror-context-menu
+		                re-code-mirror-remember-search="viewCodeSearch"
+						re-code-mirror-copy="true"
+						re-code-mirror-select-all="true"
+						re-context-menu="contextMenuFor(panel.item.path, selection)"
+						re-context-menu-class="queries-context-menu"
+						ng-model="panel.item.content"></textarea>
+				</div>
+			</div>
+		</div>
+	</div></div></div>
+
+</div>

@@ -1,0 +1,1166 @@
+%%% -*- coding: latin-1 -*-
+
+%%% This file is part of RefactorErl.
+%%%
+%%% RefactorErl is free software: you can redistribute it and/or modify
+%%% it under the terms of the GNU Lesser General Public License as published
+%%% by the Free Software Foundation, either version 3 of the License, or
+%%% (at your option) any later version.
+%%%
+%%% RefactorErl is distributed in the hope that it will be useful,
+%%% but WITHOUT ANY WARRANTY; without even the implied warranty of
+%%% MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+%%% GNU Lesser General Public License for more details.
+%%%
+%%% You should have received a copy of the GNU Lesser General Public License
+%%% along with RefactorErl.  If not, see <http://plc.inf.elte.hu/erlang/>.
+%%%
+%%% The Original Code is RefactorErl.
+%%%
+%%% The Initial Developer of the Original Code is Eötvös Loránd University.
+%%% Portions created  by Eötvös Loránd University and ELTE-Soft Ltd.
+%%% are Copyright 2007-2013 Eötvös Loránd University, ELTE-Soft Ltd.
+%%% and Ericsson Hungary. All Rights Reserved.
+
+%%% ============================================================================
+%%% Module information
+
+%%% @doc
+
+%%% == Implementation status ==
+%%% This feature is _not_ fully implemented.
+
+%%% @author Gabor Olah <olikas.g@gmail.com>
+
+%%% TODO list:
+%%%       - type environment to dict
+%%%       - print
+%%%       - match
+
+
+
+
+
+
+
+
+-module(refusr_spec).
+-vsn("$Rev: 9568 $"). %for emacs"
+
+-include_lib("stdlib/include/ms_transform.hrl").
+
+-include("user.hrl").
+
+-export([run/1, run/3]).
+-export([initETS/0, tv/0]).
+-export([analyzeSpecs/0, genspec/1 ]).
+
+-export([t/3, td/3, zipN/1]).
+-export([is_subtype/2, t_none/0, t_int/0, t_int/1, t_float/0, t_float/1,
+         t_number/0, t_atom/0, t_atom/1, t_tuple/0, t_tuple/1, t_nil/0,
+         t_list/0, t_list/1, t_funsig/2, t_union/1]).
+
+
+
+-record(type, {kind,
+               value = 'any'}).
+
+-record(funsigvalue, {arity,
+                      args,
+                      retval}).
+
+-record(state, {env,
+                type}).
+
+-record(st_state, {success,
+                   type}).
+
+-define(UNION_MAX_LENGTH, 10).
+
+
+%% @todo: move these functions to their proper place
+
+%% to reflib_file:
+specs() ->
+    ?Query:seq([file],[{form, {type, '==', spec}}]).
+%% to reflib_typexp:
+typexp_type(Node) ->
+    (?Graph:data(Node))#typexp.type.
+typexp_tag(Node) ->
+    (?Graph:data(Node))#typexp.tag.
+
+%% to reflib_expr:
+all_children(Expr) ->
+    Expr_value = ?Expr:value(Expr),
+    if
+        (Expr_value == 'andalso') or (Expr_value == 'orelse') ->
+            ?Query:exec(Expr, ?Query:seq([exprcl], ?Clause:body()));
+        true ->
+            ?Query:exec(Expr, ?Expr:children())
+    end.
+
+
+
+%% =========================================================================
+%% =========================================================================
+%% interfaces
+
+run(Mod, Name, Arity) ->
+    [Func] = ?Query:exec(?Query:exec(?Mod:find(Mod)),
+                         ?Mod:local(Name, Arity)),
+    run(Func).
+
+run(Func) ->
+    initETS(),
+    %analyzeSpecs(),
+    Res = genspec(Func),
+    ets:delete(specs),
+    refusr_spec_pp:print(Res).
+
+
+
+
+%% =========================================================================
+%% =========================================================================
+%% storing and retrieving the existing -spec forms
+
+initETS() ->
+    ets:new(specs, [named_table]).
+
+tv() ->
+    tv:start().
+
+get_new_env() ->
+    dict:new().
+
+get_new_env(OldEnv) ->
+    dict:from_list(dict:to_list(OldEnv)).
+
+lookup_var(Env, Var) ->
+    case dict:find(Var, Env) of
+        {ok, Value} ->
+            Value;
+        error ->
+            t_any()
+    end.
+
+addVariableToTable(Env, Var) ->
+    case dict:find(Var, Env) of
+        {ok, _Value} ->
+            Env;
+        error ->
+            dict:store(Var, t_any(), Env)
+    end.
+
+update_env(Env, Var, Type) ->
+    dict:update(Var,
+                fun(OldType) ->
+                        Type
+                end,
+                t_any(),
+                Env).
+
+union_envs([E1, E2]) ->
+    lists:foldl(fun({Key, Value}, Dict) ->
+                        update_env(Dict, Key, Value)
+                end, E1, dict:to_list(E2));
+union_envs([H|T]) ->
+    union_envs([H,union_envs(T)]).
+
+
+get_func_type(Func) ->
+    case ets:lookup(specs, Func) of
+        [] ->
+            {true, t_funsig()};
+        [{Func, Result}] ->
+            Result
+    end.
+
+update_func_type(Func, IsFinal ,NewFunSig) ->
+    case ets:lookup(specs, Func) of
+        [] ->
+            ets:insert(specs, {Func, {IsFinal, NewFunSig}});
+        [{Fin, FunSig}] ->
+            ets:insert(specs, {Func, {IsFinal, NewFunSig}})
+    end.
+
+
+%% =========================================================================
+%% =========================================================================
+
+
+analyzeSpecs() ->
+    AllSpecForms = ?Query:exec(specs()),
+    Specs = lists:map(fun buildFromSpec/1, AllSpecForms),
+    lists:map(fun(X) ->
+                      ets:insert(specs, X)
+              end, Specs).
+
+buildFromSpec(Form) ->
+    [Modpart, Funpart]  = ?Query:exec(Form, [tattr]),
+    [Mod] = ?Query:exec(Form, ?Form:module()),
+    ModName = ?Mod:name(Mod),
+    {Mod_ret, Name} = analModpart(Modpart),
+    case {Mod_ret, ModName} of
+        {{ok, ModName}, ModName} ->
+            Mod;
+        {{ok, ModName}, _Name} ->
+            io:format("Warning! Module name ~p doesn't match in specification! (~p)~n",
+                      [ModName, Name]);
+        {{error, unknown}, _} ->
+            Mod
+    end,
+    FunPart = analFunpart(Funpart),
+    #type{kind = funsig, value = {Args, _RetV}} = FunPart,
+    [Func] = ?Query:exec(Mod, ?Fun:find(Name, length(Args))),
+    {Func, FunPart}.
+
+analModpart(Node) ->
+    case typexp_type(Node) of
+        module_qualifier ->
+            [Modq, Name] = ?Query:exec(Node, [tsub]),
+            {{ok, typexp_tag(Modq)}, typexp_tag(Name)};
+        atom ->
+            Name = typexp_tag(Node),
+            {{error, unknown}, Name}
+    end.
+
+analFunpart(Node) ->
+    case typexp_type(Node) of
+        fun_sig ->
+            [Arglist, RetType] = ?Query:exec(Node, [tsub]),
+            #type{kind = funsig,
+                  value = {analFunpart(Arglist), analFunpart(RetType)}};
+        arglist ->
+            Args = ?Query:exec(Node, [tsub]),
+            lists:map(fun analFunpart/1, Args);
+        call ->
+            [Type, ArgList] = ?Query:exec(Node, [tsub]),
+            R = case ?Query:exec(ArgList, [tsub]) of
+                    [] ->
+                        any;
+                    Args ->
+                        lists:map(fun analFunpart/1, Args)
+                end,
+            #type{kind = typexp_tag(Type),
+                  value = R};
+        atom ->
+            #type{kind = atom,
+                  value = typexp_tag(Node)};
+        tuple ->
+            Fields = ?Query:exec(Node, [tsub]),
+            #type{kind = tuple,
+                  value = lists:map(fun analFunpart/1, Fields)};
+        list ->
+            Elems = ?Query:exec(Node, [tsub]),
+            #type{kind = list,
+                  value = lists:map(fun analFunpart/1, Elems)};
+        vardef ->
+            [_VarName, Type] = ?Query:exec(Node, [tsub]),
+            analFunpart(Type);
+        paren ->
+            [Children] = ?Query:exec(Node, [tsub]),
+            analFunpart(Children);
+        joker ->
+            #type{kind = any,
+                  value = any};
+        union ->
+            Fields = ?Query:exec(Node, [tsub]),
+            #type{kind = union,
+                  value = lists:map(fun analFunpart/1, Fields)};
+        _ ->
+            not_implemented_yet
+    end.
+
+
+%% =========================================================================
+%% =========================================================================
+%% generates specs for a fun.
+
+
+genspec(Module, Name, Arity) ->
+    [Func] = ?Query:exec(?Query:exec(?Mod:find(Module)),
+                         ?Mod:local(Name, Arity)),
+    genspec(Func).
+genspec(Func) ->
+    [Mod] = ?Query:exec(Func, ?Fun:module()),
+    _ModName = ?Mod:name(Mod),
+    Arity = ?Fun:arity(Func),
+    {Recursive, _} = refusr_cyclic_fun:check_function(Func),
+    DummyType = t_funsig([t_any() || _X <- lists:seq(1,?Fun:arity(Func))],
+                         t_any()),
+    ?d(DummyType),
+    {_, OldFunSpec} = get_func_type(Func),
+    update_func_type(Func, not Recursive, DummyType), 
+    Clauses = ?Query:exec(Func, ?Query:seq([?Fun:definition(),
+					    ?Form:clauses()])),
+    Result = case Clauses of
+                 [] ->
+                     DummyType;
+                 _ -> 
+                     Parts = [{C,
+                               get_new_env(),
+                               ?Query:exec(C, ?Clause:patterns()),
+                               ?Query:exec(C, ?Clause:guard()),
+                               ?Query:exec(C, ?Clause:body())} || C <- Clauses],
+                     ?d(Parts),
+                     Types = [ type_for_clause(Func, Cl, Env, Patterns, Guards, Body)
+                               || {Cl, Env, Patterns, Guards, Body} <- Parts],
+                     ?d(Types),
+                     ArgTypes = zipN([ (T#type.value)#funsigvalue.args || T <- Types]),
+                     NewArgTypes = [ t_union(A) || A <- ArgTypes],
+                     RetType = t_union([ (T#type.value)#funsigvalue.retval 
+                                         || T <- Types]),
+                     t_funsig(NewArgTypes, RetType)
+    end,
+    
+    case Recursive of
+        true ->
+            case OldFunSpec =/= Result of
+                true ->
+                    genspec(Func);
+                false ->
+                    update_func_type(Func, true, Result),
+                    Result
+            end;
+        false ->
+            update_func_type(Func, true, Result),
+            Result
+    end.
+
+type_for_clause(Func, Cl, Env, Patterns, Guards, Body) ->
+    ArgsTypes    = argType(Env, Cl, Patterns, Guards),
+    RetState = retType(Env, Cl, Body),
+    FinalRetType = finalize(RetState#state.env, RetState#state.type),
+    FinalArgs    = [finalize(Env, X) || X <- ArgsTypes],
+    {IsFinal, OldFunSig} = get_func_type(Func),
+    ZipArgs = lists:zip((OldFunSig#type.value)#funsigvalue.args,
+                        (OldFunSig#type.value)#funsigvalue.args),
+    NewArgs    = [t_union([X,Y]) 
+                  || {X,Y} <- ZipArgs ],
+    NewRetType = t_union([FinalRetType, 
+                          (OldFunSig#type.value)#funsigvalue.retval]),
+    NewFunSig = t_funsig(NewArgs, NewRetType),
+    update_func_type(Func, IsFinal, NewFunSig),
+    NewFunSig.
+
+
+%% =========================================================================
+%% GUARDS
+
+processGuards(Env, Guard) ->
+    guardType(Env, Guard, ?Expr:type(Guard)).
+
+guardType(Env, Guard, infix_expr) ->
+    [Lhs, Rhs] = all_children(Guard),
+    case ?Expr:value(Guard) of
+        ';' ->
+            LhsT = guardType(get_new_env(Env), Lhs, ?Expr:type(Lhs)),
+            RhsT = guardType(get_new_env(Env), Rhs, ?Expr:type(Rhs));
+        'or' ->
+            LhsT = guardType(get_new_env(Env), Lhs, ?Expr:type(Lhs)),
+            RhsT = guardType(get_new_env(Env), Rhs, ?Expr:type(Rhs));
+        _ ->
+            LhsT = guardType(Env, Lhs, ?Expr:type(Lhs)),
+            RhsT = guardType(Env, Rhs, ?Expr:type(Rhs))
+    end,
+    {LT, RT, RetType} = typeOfInfix(?Expr:value(Guard)),
+    case {match(Env, LhsT, LT), match(Env, RhsT, RT)} of
+        {{success, _},{success, _}} ->
+            RetType;
+        _ ->
+            #type{kind='none', value='none'}
+    end;
+guardType(Env, Guard, application) ->
+    [NameNode| ArgList] = ?Query:exec(Guard, ?Expr:children()),
+    Name = ?Expr:value(NameNode),
+    guardAppl(Env, Name, ?Query:exec(ArgList, ?Expr:children()));
+guardType(Env, Guard, prefix_expr) ->
+    [Ch] = ?Query:exec(Guard, ?Expr:children()),
+    ChT = guardType(Env, Ch, ?Expr:type(Ch)),
+    {OperandType, RetType} = typeOfPrefix(?Expr:value(Guard)),
+    case match(Env, ChT, OperandType) of
+        {success, _} ->
+            RetType;
+        _ ->
+            #type{kind='none', value='none'}
+    end;
+guardType(_Env, _Guard, T) ->
+    #type{kind=T, value='any'}.
+
+guardApplCase(Env, Node, Rhs) ->
+    case ?Expr:type(Node) of
+        variable ->
+            [V] = ?Query:exec(Node, ?Query:any([varref],[varbind])),
+            match(Env, #type{kind=variable, value=V}, Rhs);
+        atom ->
+            true;
+        _ ->
+            false
+    end.
+
+guardAppl(Env, 'is_atom', [Node]) ->
+    guardApplCase(Env, Node, #type{kind='atom', value='any'});
+guardAppl(Env, 'is_binary', [Node]) ->
+    guardApplCase(Env, Node, #type{kind='binary', value='any'});
+guardAppl(Env, 'is_bitstring', [Node]) ->
+    guardApplCase(Env, Node, #type{kind='bitstring', value='any'});
+guardAppl(Env, 'is_boolean', [Node]) ->
+    guardApplCase(Env, Node, #type{kind='union',
+                                   value=[#type{kind='atom', value='true'},
+                                          #type{kind='atom', value='false'}]});
+guardAppl(Env, 'is_float', [Node]) ->
+    guardApplCase(Env, Node, #type{kind='float', value='any'});
+guardAppl(Env, 'is_function', [Node]) ->
+    guardApplCase(Env, Node, #type{kind='funsig', value='any'});
+guardAppl(Env, 'is_function', [Name, Arity]) ->
+    guardApplCase(Env, Name, #type{kind='atom', value='any'}),
+    guardApplCase(Env, Arity, #type{kind='integer', value='any'});
+guardAppl(Env, 'is_integer', [Node]) ->
+    guardApplCase(Env, Node, #type{kind='int', value='any'});
+guardAppl(Env, 'is_list', [Node]) ->
+    guardApplCase(Env, Node, #type{kind='list',
+                                   value={#type{kind='any', value='any'},
+                                          #type{kind='any', value='any'}}});
+guardAppl(Env, 'is_number', [Node]) ->
+    guardApplCase(Env, Node, #type{kind=union,
+                                   value=[#type{kind=int,value=any},
+                                          #type{kind=float,value=any}]});
+guardAppl(Env, 'is_pid', [Node]) ->
+    guardApplCase(Env, Node, #type{kind='pid', value='any'});
+guardAppl(Env, 'is_port', [Node]) ->
+    guardApplCase(Env, Node, #type{kind='port', value='any'});
+guardAppl(Env, 'is_reference', [Node]) ->
+    guardApplCase(Env, Node, #type{kind='refence', value='any'});
+guardAppl(Env, 'is_tuple', [Node]) ->
+    guardApplCase(Env, Node, #type{kind='tuple', value='any'});
+guardAppl(_, _, _) ->
+    true.
+
+
+
+argType(Env, Clause, Patterns, Guards) ->
+    ArgsStates = [getType(Env, P) || P <- Patterns],
+    Envs = [ T#state.env || T <- ArgsStates ],
+    NewEnv = union_envs([Env | Envs]), 
+    [processGuards(Env, G) || G <- Guards],
+    Args.
+
+retType(Env, Clause, Body) ->
+    lists:foldl(fun(B, S) ->
+                        getType(S#state.env, B)
+                end, #state{env=Env,type=t_any()}, Body).
+
+initDummyTypes(Func, Parts) ->
+    lists:map(fun({Cl, _, ArgList, _, _}) ->
+		      ArgTypeList = lists:map(fun(_) ->
+						      #type{kind=any, value=any}
+					      end, ArgList),
+		      ets:insert(specs,
+				 {Func,
+				  Cl,
+				  'true',
+				  #type{kind=funsig,
+					value={ArgTypeList,#type{kind=any,
+								 value=any}}}})
+              end, Parts).
+
+
+%% =========================================================================
+%% =========================================================================
+%% analyzes the type of Expr expression in Env envirionment
+
+getType(Env, Expr) ->
+    ?d(Expr),
+    getType(Env, Expr, ?Expr:type(Expr)).
+
+% ---- int
+getType(Env, Expr, integer) ->
+    #state{env=Env, type=t_int()};
+% ---- float
+getType(Env, Expr, float) ->
+    #state{env=Env, type=t_float()};
+% ---- atom
+getType(Env, Expr, atom) ->
+    #state{env=Env, type=t_atom(?Expr:value(Expr))};
+% ---- string
+getType(Env, Expr, string) ->
+    %TODO improvement: string()
+    #state{env=Env, type=t_list()};
+% ---- joker
+getType(Env, _Expr, joker) ->
+    #state{env=Env, type=t_any()};
+% ---- tuple
+getType(Env, Expr, tuple) ->
+    Ch = ?Query:exec(Expr, ?Expr:children()),
+    TupleTypes = [getType(Env, C) || C<-Ch],
+    Envs = [ E#state.env || E <- TupleTypes ],
+    Types = [ T#state.type || T <- TupleTypes ],
+    NewEnv = union_envs([Env|Envs]),
+    #state{env=NewEnv, type=t_tuple(Types)};
+% ---- cons
+getType(Env, Expr, cons) ->
+    case ?Query:exec(Expr, ?Expr:children()) of
+        [] ->
+            #state{env=Env, type=t_nil()};
+        Children ->
+            Es = listElements(Children),
+            Ts = [getType(Env, C) || C <- Es],
+            Envs = [ E#state.env || E <- Ts ],
+            Types = [ T#state.type || T <- Ts ],
+            NewEnv = union_envs([Env|Envs]),
+            #state{env=NewEnv, type=t_list(t_union(Types))}
+    end;
+
+
+% ---- variable
+getType(Env, Expr, variable) ->
+    case ?Query:exec(Expr, ?Query:any([varref],[varbind])) of
+        [] ->
+            #state{env=Env, type=t_none()};
+        [V] ->
+            NewEnv = addVariableToTable(Env, V),
+            #state{env=NewEnv, type=#type{kind='variable', value=V}}
+    end;
+% ---- match expr
+getType(Env, Expr, match_expr) ->
+    [Lhs,Rhs] = ?Query:exec(Expr, ?Expr:children()),
+    RhsT = getType(Env, Rhs),
+    LhsT = getType(Env, Lhs),
+    NewEnv = union_envs([Env, RhsT#state.env, LhsT#state.env]),
+    case match(NewEnv, LhsT#state.type, RhsT#state.type) of
+        {success, _} ->
+            #state{env=NewEnv, type=finalize(NewEnv, RhsT#state.type)};
+        {bad_match, _} ->
+            #state{env=NewEnv, type=t_none()}
+    end;
+% ---- application
+getType(Env, Expr, application) ->
+    %OrigFuns = ?Query:exec(Clause, ?Query:seq([?Clause:form(), ?Form:func()])),
+    case ?Query:exec(Expr, ?Expr:function()) of
+        [] ->
+            #state{env=Env, type=t_any()};
+        [Func] ->
+            Args = ?Query:exec(?Query:exec(Expr, ?Expr:child(2)),?Expr:children()),
+            ArgsTypes = [ getType(Env, Arg) || Arg <- Args ],
+            Envs = [ T#state.env || T <- ArgsTypes ],
+            NewEnv = union_envs([Env | Envs]),
+            FinArgTypes = [finalize(NewEnv, T#state.type) || T <- ArgsTypes ],
+            {_, FuncType} = get_func_type(Func),
+            ZippedArgs = lists:zip(FinArgTypes, 
+                                   (FuncType#type.value)#funsigvalue.args),
+            IsST = lists:all(fun({success, _}) ->
+                                     true;
+                                (_) ->
+                                     false
+                             end, [match(NewEnv, X, Y) || {X,Y} <- ZippedArgs]),
+            case IsST of
+                true ->
+                    #state{env=NewEnv, type=(FuncType#type.value)#funsigvalue.retval};
+                false ->
+                    #state{env=NewEnv, type=t_none()}
+            end
+    end;
+% ---- infix expr
+getType(Env, Expr, infix_expr) ->
+    [Lhs,Rhs] = all_children(Expr),
+    LhsT = getType(Env, Lhs),
+    RhsT = getType(Env, Rhs),
+    {LT, RT, RetType} = typeOfInfix(?Expr:value(Expr)),
+    NewEnv =  union_envs([Env, RhsT#state.env, LhsT#state.env]),
+    case {match(NewEnv, LhsT#state.type, LT), match(NewEnv, RhsT#state.type, RT)} of
+        {{success, _},{success, _}} ->
+            #state{env=NewEnv, type=RetType};
+        _ ->
+            #state{env=NewEnv, type=t_none()}
+    end;
+% ---- prefix expr
+getType(Env, Expr, prefix_expr) ->
+    [Ch] = ?Query:exec(Expr, ?Expr:children()),
+    ChT = getType(Env, Ch),
+    {OperandType, RetType} = typeOfPrefix(?Expr:value(Expr)),
+    NewEnv =  union_envs([Env, ChT#state.env]),
+    case match(NewEnv, ChT#state.type, OperandType) of
+        {success, _} ->
+            #state{env=NewEnv, type=RetType};
+        _ ->
+            #state{env=NewEnv, type=t_none()}
+    end;
+% ---- parenthesis
+getType(Env, Expr, parenthesis) ->
+    [Ch] = ?Query:exec(Expr, ?Expr:children()),
+    getType(Env, Ch);
+getType(Env, Expr, case_expr) ->
+    [Head] = ?Query:exec(Expr, ?Query:seq([headcl],?Clause:body())),
+    HeadType = getType(Env, Head),
+    PatternClauses = ?Query:exec(Expr, [exprcl]),
+    Parts = [{Cl, get_new_env(Env),
+              ?Query:exec(Cl, ?Clause:patterns()),
+              ?Query:exec(Cl, ?Clause:guard()),
+              ?Query:exec(Cl, ?Clause:body())}
+	     ||Cl <- PatternClauses],
+    Types = [ {Cl, NewEnv,
+               argType(NewEnv, Cl, Patterns, Guards),
+               retType(NewEnv, Cl, Body)}
+	      || {Cl, NewEnv, Patterns, Guards, Body} <- Parts],
+    _Res = [ {Cl, NewEnv,
+	      [finalize(NewEnv, X) || X <- ArgList],
+	      lists:last(RetTypeList)}
+	     || {Cl, NewEnv, ArgList, RetTypeList} <- Types],
+    Ps = lists:flatten([ArgList || {_, _, ArgList, _} <- Types]),
+    R = lists:flatten([RetList || {_, _, _, RetList} <- Types]),
+    match(Env, HeadType, finalize(Env, #type{kind='union', value=Ps})),
+    case R of
+        [] ->
+            error;
+        [X] ->
+            X;
+        L when is_list(L) ->
+            #type{kind='union', value=L}
+    end;
+
+getType(_Env, _Expr, _) ->
+    unimplemented,
+    #type{kind = 'any', value = 'any'}.
+
+
+
+
+
+
+listElements([Child|ChildrenList]) ->
+    case ?Expr:type(Child) of
+        list ->
+            ?Query:exec(Child, ?Expr:children()) ++ listElements(ChildrenList);
+        cons ->
+            listElements(?Query:exec(Child, ?Expr:children()) ++ ChildrenList);
+        _ ->
+            [Child]
+    end;
+listElements([]) ->
+    [].
+
+
+
+
+selectClauses(Env, Func, ArgsTypes) ->
+    ListOfFunSigs = get_func_type(Func),
+    R = lists:filter(fun({_F, _Cl, _IsFinal, FunSig}) ->
+			     {AL, _RV} = FunSig#type.value,
+			     R = [match(Env, X, Y) || {X, Y}<-lists:zip(AL, ArgsTypes)],
+			     lists:all(fun({success, _}) -> true;
+					  (_)           -> false
+				       end, R)
+		     end, ListOfFunSigs),
+    R2 = lists:map(fun({_,_,IsFinal,FunSig}) ->
+			   {IsFinal, FunSig}
+                   end, R),
+    {FinalList, FunSigList} = lists:unzip(R2),
+    {lists:all(fun toBool/1,FinalList), FunSigList}.
+
+retTypeOfFunSigList(FunSigList) ->
+    R = lists:map(fun(#type{kind=funsig, value={_, RT}}) ->
+			  RT
+                  end, FunSigList),
+    case R of
+        []  ->
+            #type{kind='none', value='none'};
+        [X] ->
+            X;
+        L   ->
+            #type{kind='union', value=L}
+    end.
+
+
+%% =========================================================================
+%% =========================================================================
+%% analyzes the type of Expr expression in Env envirionment
+
+
+match(_Env, #type{kind=any, value=any}, X) ->
+    {success, X};
+match(_Env, X, #type{kind=any, value=any}) ->
+    {success, X};
+match(_Env, #type{kind=X, value=any}, #type{kind=X, value=Y}) ->
+    {success, #type{kind=X, value=Y}};
+%% TODO újragondolni a tuple match-et
+match(Env, #type{kind = tuple, value = V}, T) ->
+    if
+        T#type.kind =:= tuple ->
+            case length(V) =:= length(T#type.value) of
+                true ->
+                    L = lists:zip(V, T#type.value),
+                    R = lists:all(fun({X,Y}) ->
+                                          {B, _} = match(Env, X, Y),
+                                          B =:= success
+                                  end, L),
+                    case R of
+                        true ->
+                            {success, T};
+                        false ->
+                            {bad_match, T}
+                    end;
+                false ->
+                    {bad_match, T}
+            end;
+        true ->
+            {bad_match, T}
+    end;
+match(_Env, #type{kind=list, value=nil}, #type{kind=list, value=nil})->
+    {success, #type{kind=list, value=nil}};
+match(Env, #type{kind=list, value={LH,LT}}, #type{kind=list, value={LH,RT}}) ->
+    match(Env, LT, RT);
+match(Env, #type{kind=list, value={LH,LT}}, #type{kind=list, value={RH,RT}}) ->
+    case match(Env, LH, RH) of
+        {success, _} ->
+            match(Env, LT, RT);
+        {_, Ret} ->
+            {bad_match, Ret}
+    end;
+match(Env, #type{kind=variable, value=X}, Y) ->
+    {matchVar(Env, X, Y), Y};
+match(Env, Y, #type{kind=variable, value=X}) ->
+    {matchVar(Env, X, Y), Y};
+match(Env, #type{kind=union, value=X}, #type{kind=union, value=Y}) ->
+    I = lists:filter(fun(Z) ->
+                             case match(Env, #type{kind=union, value=X}, Z) of
+                                 {success, _} ->
+                                     true;
+                                 _ ->
+                                     false
+                             end
+                     end, Y),
+    case I of
+        [] ->
+            {badmatch, #type{kind='none', value='none'}};
+        [Q] ->
+            {success, Q};
+        W ->
+            {success, #type{kind=union, value=W}}
+    end;
+match(Env, #type{kind=union, value=X}, Y) ->
+    Intersection = lists:filter(fun(Z) ->
+                                        case match(Env, Z,Y) of
+                                            {success, _} ->
+                                                true;
+                                            _ ->
+                                                false
+                                        end
+                                end, X),
+    case Intersection of
+        [] ->
+            #type{kind='none', value='none'};
+        [Q] ->
+            {success, Q};
+        W ->
+            {success, #type{kind=union, value=W}}
+    end;
+match(Env, Y, #type{kind=union, value=X}) ->
+    match(Env, #type{kind=union, value=X}, Y);
+match(_Env, #type{kind=X, value=XX}, #type{kind=X, value=_Y}) ->
+    {bad_match, #type{kind=X, value=XX}};
+match(_Env, _X,Y) ->
+    {bad_match, Y}.
+
+matchVar(Env, Var, Type) ->
+    PastType = lookup_var(Env, Var),
+    Res = match(Env, PastType, Type),
+    case Res of
+        {success, T} ->
+            {success, update_env(Env, Var, Type)};
+        _ ->
+            {bad_match, Env}
+    end.
+
+%% =========================================================================
+%% replaces every variable record with its actual type
+
+finalize(Env, #type{kind=variable, value=V}) ->
+    VarType = lookup_var(Env, V),
+    VarType;
+finalize(_Env, #type{kind=K, value=any}) ->
+    #type{kind=K, value=any};
+finalize(_Env, #type{kind=list, value=nil}) ->
+    #type{kind=list, value=nil};
+finalize(Env, #type{kind=list, value={H,T}}) ->
+    #type{kind=list, value={finalize(Env, H), finalize(Env, T)}};
+finalize(Env, #type{kind=tuple, value=V}) ->
+    #type{kind=tuple, value=[finalize(Env, X)||X<-V]};
+finalize(Env, #type{kind=union, value=V}) ->
+						%    #type{kind=union, value=[finalize(Env, X)||X<-V]};
+    simplify(#type{kind=union, value=uniq([finalize(Env, X)||X<-V])});
+finalize(_Env, Type) ->
+    Type.
+
+
+%% Only for testing
+
+t(M,F,A) ->
+    initETS(),
+    analyzeSpecs(),
+    Res = genspec(M,F,A),
+    ets:delete(specs),
+    ets:delete(errors),
+    ets:delete(warnings),
+    io:format("~p~n",[Res]),
+    refusr_spec_pp:print(Res).
+td(M,F,A) ->
+    initETS(),
+    analyzeSpecs(),
+    Res = genspec(M,F,A),
+    ets:delete(specs),
+    ets:delete(errors),
+    ets:delete(warnings),
+    Res.
+
+
+%% =========================================================================
+%% =========================================================================
+%% INFIX OPERATORS
+
+typeOfInfix('+') ->
+    {t_number(), t_number(), t_number()};
+typeOfInfix('-') ->
+    {t_number(), t_number(), t_number()};
+typeOfInfix('*') ->
+    {t_number(), t_number(), t_number()};
+typeOfInfix('/') ->
+    {t_number(), t_number(), t_float()};
+typeOfInfix('div') ->
+    {t_int(), t_int(), t_int()};
+typeOfInfix('rem') ->
+    {t_int(), t_int(), t_int()};
+typeOfInfix('band') ->
+    {t_int(), t_int(), t_int()};
+typeOfInfix('bor') ->
+    {t_int(), t_int(), t_int()};
+typeOfInfix('bxor') ->
+    {t_int(), t_int(), t_int()};
+typeOfInfix('bsl') ->
+    {t_int(), t_int(), t_int()};
+typeOfInfix('bsr') ->
+    {t_int(), t_int(), t_int()};
+typeOfInfix('and') ->
+    {t_any(), t_any(), t_bool()};
+typeOfInfix(',') ->
+    {t_any(), t_any(), t_bool()};
+typeOfInfix(';') ->
+    {t_any(), t_any(), t_bool()};
+typeOfInfix('or') ->
+    {t_any(), t_any(), t_bool()};
+typeOfInfix('xor') ->
+    {t_any(), t_any(), t_bool()};
+typeOfInfix('orelse') ->
+    {t_bool(), t_any(), t_any()};
+typeOfInfix('andalso') ->
+    {t_bool(), t_any(), t_any()};
+typeOfInfix('++') ->
+    {t_list(), t_list(), t_list()};
+typeOfInfix(_) ->
+    {t_any(), t_any(), t_any()}.
+
+%% =========================================================================
+%% INFIX OPERATORS
+%% =========================================================================
+
+
+typeOfPrefix('+') ->
+    {t_number(), t_number()};
+typeOfPrefix('-') ->
+    {t_number(), t_number()};
+typeOfPrefix('bnot') ->
+    {t_int(), t_int()};
+typeOfPrefix('not') ->
+    {t_bool(), t_bool()};
+typeOfPrefix(_) ->
+    {t_any(), t_any()}.
+
+
+
+%%% ===========================================================================
+%%% ===========================================================================
+%%% ===========================================================================
+%%% ===========================================================================
+%%% ===========================================================================
+
+
+is_subtype(#type{kind='any'}, #type{kind='any'}) ->
+    #st_state{success='true', type=t_any()};
+is_subtype(A                , #type{kind='any'}) ->
+    #st_state{success='true', type=A};
+is_subtype(#type{kind='none'}, _) ->
+    #st_state{success='true', type=t_none()};
+is_subtype(A, A) ->
+    #st_state{success='true', type=A};
+% ---- variable
+is_subtype(#type{kind='variable', value=_AV} = A, B) ->
+    #st_state{success='false', type=A};
+% ---- tuple
+is_subtype(#type{kind='tuple', value=AV} = A, #type{kind='tuple', value=BV}) ->
+    case length(AV) == length(BV) of
+        true ->
+            L = lists:zip(AV, BV),
+            R = lists:all(fun({X, Y}) ->
+                                  (is_subtype(X, Y))#st_state.success
+                          end, L),
+            case R of
+                true ->
+                    #st_state{success='true', type=A};
+                false ->
+                    #st_state{success='false', type=t_none()}
+            end;
+        false ->
+            #st_state{success='false', type=t_none()}
+    end;
+% ---- list
+is_subtype(#type{kind='list', value='nil'}, #type{kind='list', value='any'}) ->
+    #st_state{success='true', type=t_nil()};
+is_subtype(#type{kind='list', value=AV}, #type{kind='list', value=BV}) ->
+    case is_subtype(AV, BV) of
+        #st_state{success='true', type=V} ->
+            #st_state{success='true', type=t_list(V)};
+        _ ->
+            #st_state{success='false', type=t_none()}
+    end;
+% ---- funsig
+is_subtype(#type{kind='funsig', value=AV}, #type{kind='funsig', value=BV}) ->
+    case AV#funsigvalue.arity =/= BV#funsigvalue.arity of
+        true ->
+            #st_state{success='false', type=t_none()};
+        false ->
+            ArgPairs = lists:zip(AV#funsigvalue.args, BV#funsigvalue.args),
+            ArgSTList = [ is_subtype(X,Y) || {X,Y} <- ArgPairs ],
+            ArgsSuccess = lists:all(fun(T) ->
+                                            T#st_state.success
+                                    end, ArgSTList),
+            % contra-variance
+            RetST = is_subtype(BV#funsigvalue.retval,
+                               AV#funsigvalue.retval),
+            case ArgsSuccess and RetST#st_state.success of
+                true ->
+                    NewArgs = [ T#st_state.type || T <- ArgSTList ],
+                    #st_state{success='true', 
+                              type=t_funsig(NewArgs, RetST#st_state.type)};
+                false ->
+                    #st_state{success='false', type=t_none()}
+            end
+    end;
+% ---- union
+is_subtype(#type{kind='union', value=AV}, #type{kind='union', value=_BV} = B) ->
+    case [ (is_subtype(T, B))#st_state.type || T <- AV ] of
+        [] ->
+            #st_state{success='false', type=t_none()};
+        [R] ->
+            #st_state{success='true', type=R};
+        L ->
+            #st_state{success='true', type=t_union(L)}
+    end;
+is_subtype(A, #type{kind='union', value=BV}) when A#type.kind =/= 'union' ->
+    L = lists:filter(fun(T) ->
+                             (is_subtype(A, T))#st_state.success
+                     end, BV),
+    case L of
+        [] ->
+            #st_state{success='false', type=t_none()};
+        [R] ->
+            #st_state{success='true', type=R};
+        L ->
+            #st_state{success='true', type=t_union(L)}
+    end;
+
+% ---- other cases            
+is_subtype(#type{kind=_T, value=_V} = A, #type{kind=_T, value='any'}) ->
+    #st_state{success='true', type=A};
+is_subtype(_A, _B) ->
+    #st_state{success='false', type=t_none()}.
+
+
+
+is_comparable_types(A,B) ->
+    (is_subtype(A,B))#st_state.success 
+        or 
+          (is_subtype(B,A))#st_state.success.
+
+
+%%% ======================================================================
+%%% Type constructor functions
+%%% ======================================================================
+
+t_none() ->
+    #type{ kind   = 'none',
+           value  = 'none'
+         }.
+
+t_any() ->
+    #type{ kind  = 'any',
+           value = 'any'
+         }.
+
+t_int() ->
+    #type{ kind   = 'int',
+           value  = 'any'
+         }.
+
+t_int(N) when is_integer(N) ->
+    #type{ kind   = 'int',
+           value  = N
+         }.
+
+t_float() ->
+    #type{ kind   = 'float',
+           value  = 'any'
+         }.
+
+t_float(F) when is_float(F) ->
+    #type{ kind   = 'float',
+           value  = 'any'
+         }.
+
+t_number() ->
+    t_union([t_int(), t_float()]).
+%    #type{ kind  = 'number',
+%           value = 'any'
+%         }.
+
+t_atom() ->
+    #type{ kind   = 'atom',
+           value  = 'any'
+         }.
+
+t_atom(A) when is_atom(A) ->
+    #type{ kind   = 'atom',
+           value  = A
+         }.
+
+t_bool() ->
+    t_union([t_atom('true'), t_atom('false')]).
+
+t_tuple() ->
+    #type{ kind   = 'tuple',
+           value  = 'any'
+         }.
+
+t_tuple(TypeList) when is_list(TypeList) ->
+    #type{ kind   = 'tuple',
+           value  = TypeList
+         }.
+
+t_nil() ->
+    #type{ kind  = 'list',
+           value = 'nil'
+         }.
+
+t_list() ->
+    #type{ kind  = 'list',
+           value = 'any'
+         }.
+
+t_list(T) when is_record(T, type) ->
+    #type{ kind  = 'list',
+           value = T
+         }.
+
+t_funsig() ->
+    #type{ kind  = 'funsig',
+           value = 'any'}.
+
+t_funsig(Args, RetValue) when is_list(Args), is_record(RetValue, type) ->
+    #type{ kind  = 'funsig',
+           value = #funsigvalue{ arity = length(Args),
+                                 args  = Args,
+                                 retval = RetValue
+                               }
+         }.
+
+%% Union types can only be created by union type constructor, hence
+%% elements of Types can be one level deep union.
+t_union([Type]) ->
+    Type;
+t_union(Types) when is_list(Types) ->
+    UnionTypes = lists:flatten([ T#type.value
+                                 || T <- Types, T#type.kind == 'union']),
+    NonUnionTypes = [T || T <- Types, T#type.kind =/= 'union'],
+    UniqTypes = lists:usort(UnionTypes ++ NonUnionTypes),
+
+    EquivTypes = partition(fun is_comparable_types/2, UniqTypes),
+    MaxTypes = [ hd(lists:sort(fun(A,B) ->
+				       is_subtype(B,A)
+                               end,T))
+		 || T <- EquivTypes ],
+    case length(MaxTypes)  of
+        N when N > ?UNION_MAX_LENGTH ->
+            t_any();
+        1 ->
+            [T] = MaxTypes,
+            T;
+        _ ->
+            #type{ kind  = 'union',
+                   value = MaxTypes
+                 }
+    end.
+
+    
+
+
+
+
+%%% ==========================================================================
+%%% Utility functions
+%%% ==========================================================================
+
+%% Makes classifiction on the list according to Pred
+%% @spec partition(Pred, List) -> ListList
+%%
+%%      Pred = fun((Item, Item) -> boolean())
+%%      List = [term()]
+%%      ListList = [[term()]]
+%% @end
+partition(_Pred, []) ->
+    [];
+partition(Pred, [H|_T] = L) ->
+    {L1, L2} = lists:partition(fun(E) -> Pred(H,E) end, L),
+    [L1| partition(Pred, L2)].
+
+%% =========================================================================
+%% like lists:zip/2, but it takes arbitrary number of list with the same
+%% length and returns ordered n-th.
+
+zipN(List) ->
+    F = fun(N) ->
+                lists:map(takeNth(N), List)
+        end,
+    lists:map(F, lists:seq(1,length(hd(List)))).
+
+takeNth(N) ->
+    fun(X) when is_list(X) ->
+	    lists:nth(N, X)
+    end.
+
+simplify(#type{kind=union, value=[]}) ->
+    #type{kind=none, value=none};
+simplify(#type{kind=union, value=[X]}) ->
+    X;
+simplify(T) ->
+    T.
+
+uniq([]) ->
+    [];
+uniq([X]) ->
+    [X];
+uniq([Head|Tail]) ->
+    uniqacc(Head,Tail).
+
+uniqacc(Head,[Head|Tail]) ->
+    uniqacc(Head,Tail);
+uniqacc(Head,[]) ->
+    [Head];
+uniqacc(Head,[NotHead|Tail]) ->
+    [Head|uniq([NotHead|Tail])].
+
+
+toBool(true) ->
+    true;
+toBool(false) ->
+    false;
+toBool(undefined) ->
+    true.

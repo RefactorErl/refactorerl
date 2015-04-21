@@ -1,0 +1,39 @@
+// Global parameters
+$background:     #e8e7e3;
+$default-font:   "Lucida Grande", "Helvetica Neue", Helvetica, Arial, sans-serif;
+$monospace-font: DejaVuSansMonoBook, monospace;
+$primary-color:  #2c90cd;
+$error-color:    #ad2c2b;
+$selection:      #39f;
+
+// Common button parameters
+$button-border-radius:      2px;
+$button-padding-vertical:   4px;
+$button-padding-horizontal: 5px;
+
+// Normal button style
+$button-bg-from: #f7f7f7;
+$button-bg-to:   #e1e1e1;
+$button-border:  #cacaca;
+
+// Alternative primary button
+$primary-button-bg-from:   #59bedc;
+$primary-button-bg-to:     #3097b5;
+$primary-button-bg-border: darken(#419db8, 5);
+$primary-button-text:      #fff;
+
+// Primary button style
+$primary-button-bg-from:   #40a6e6;
+$primary-button-bg-to:     #268ac6;
+$primary-button-bg-border: #28668c;
+$primary-button-text:      #fff;
+
+// Misc colors
+$logo-color:              $error-color;
+$context-menu-bg:         #f0f0f0;
+$context-menu-active:     $selection;
+$select2-active-bg:       $selection;
+$source-viewer-selection: $selection;
+$focused-input-border:    $primary-color;
+$progress-bar-color:      $primary-color;
+$hint-css-bg:             rgba(#383838, 0.8);
